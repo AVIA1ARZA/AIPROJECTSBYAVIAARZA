@@ -1,0 +1,6 @@
+{
+  "name": "מסננת",
+  "description": "מערכת חכמה לסינון קורות חיים והתאמתם למשרות פתוחות, מעוצבת בגוונים ורדרדים ניטרליים ועם כתב מעוגל.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

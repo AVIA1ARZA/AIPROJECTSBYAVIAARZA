@@ -1,0 +1,104 @@
+{
+  "entities": {
+    "CompletedQuestion": {
+      "title": "CompletedQuestion",
+      "description": "A record of a completed SQL practice question.",
+      "type": "object",
+      "properties": {
+        "questionId": { "type": "string" },
+        "questionTitle": { "type": "string" },
+        "questionDescription": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard", "Expert"] },
+        "userSql": { "type": "string" },
+        "score": { "type": "number" },
+        "isCorrect": { "type": "boolean" },
+        "explanation": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "correctSql": { "type": "string" },
+        "chatHistory": { "type": "array", "items": { "type": "object" } },
+        "chatSummary": { "type": "string" },
+        "role": { "type": "string" },
+        "department": { "type": "string" }
+      },
+      "required": ["questionId", "questionTitle", "difficulty", "userSql", "score", "isCorrect", "userId", "timestamp"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "A user's profile information including department and role.",
+      "type": "object",
+      "properties": {
+        "department": { "type": "string" },
+        "role": { "type": "string" },
+        "setupCompleted": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["department", "role", "setupCompleted", "updatedAt"]
+    },
+    "UserQuestion": {
+      "title": "UserQuestion",
+      "description": "A user-submitted or generated question.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard", "Expert"] },
+        "correctSql": { "type": "string" },
+        "insights": { "type": "object" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "id", "title", "description", "difficulty", "correctSql", "insights", "timestamp"]
+    },
+    "SavedTip": {
+      "title": "SavedTip",
+      "description": "A saved AI tip or recommendation for a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "text": { "type": "string" },
+        "category": { "type": "string" },
+        "savedAt": { "type": "string", "format": "date-time" },
+        "highlightedLines": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["userId", "text", "category", "savedAt"]
+    },
+    "DailyExercises": {
+      "title": "DailyExercises",
+      "description": "Customized 5 daily exercises to target and overcome user's SQL weaknesses",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "weaknesses": { "type": "array", "items": { "type": "string" } },
+        "exercises": { "type": "array", "items": { "type": "object" } },
+        "completedIds": { "type": "array", "items": { "type": "string" } },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "weaknesses", "exercises", "completedIds", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/completed_questions/{questionId}": {
+      "schema": "CompletedQuestion",
+      "description": "Collection of completed questions indexed by a unique ID."
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents indexed by their UID."
+    },
+    "/user_questions/{questionId}": {
+      "schema": "UserQuestion",
+      "description": "Collection of user-created questions."
+    },
+    "/saved_tips/{tipId}": {
+      "schema": "SavedTip",
+      "description": "Collection of saved AI tips indexed by unique ID."
+    },
+    "/daily_exercises/{docId}": {
+      "schema": "DailyExercises",
+      "description": "Collection of daily exercises assigned to users for their weaknesses."
+    }
+  }
+}

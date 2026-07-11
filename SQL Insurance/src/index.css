@@ -1,0 +1,277 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-accent: #D4FF00;
+  --color-accent-crimson: #DC2626;
+  --color-bento-border: #0F172A;
+
+  /* Override oklch/oklab colors with hex for html2canvas compatibility */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+  
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-gray-950: #030712;
+
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #52525b;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b;
+  --color-zinc-950: #09090b;
+
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #a3a3a3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+  --color-neutral-950: #0a0a0a;
+
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+  --color-blue-950: #172554;
+  
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+  --color-amber-900: #78350f;
+  --color-amber-950: #451a03;
+
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-200: #fecaca;
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-red-800: #991b1b;
+  --color-red-900: #7f1d1d;
+  --color-red-950: #450a0a;
+
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-200: #bbf7d0;
+  --color-green-300: #86efac;
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+  --color-green-800: #166534;
+  --color-green-900: #14532d;
+  --color-green-950: #052e16;
+
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdba74;
+  --color-orange-400: #fb923c;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
+  --color-orange-950: #431407;
+}
+
+/* CodeMirror Overrides & Premium Dark Neon Sandwich Skin */
+.cm-editor {
+  height: 100% !important;
+  background-color: #0B0F19 !important;
+  color: #F8FAFC !important;
+  outline: none !important;
+}
+
+.cm-scroller {
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  line-height: 1.625 !important;
+  letter-spacing: -0.011em !important;
+}
+
+.cm-content {
+  padding: 12px 4px !important;
+}
+
+.cm-gutters {
+  background-color: #0B0F19 !important;
+  color: #94A3B8 !important; /* Brighter slate for line numbers */
+  border-right: 1px solid #1E293B !important;
+  border-left: none !important;
+  font-size: 11px !important;
+}
+
+.cm-activeLineGutter, .cm-gutterElement {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  padding-right: 10px !important;
+}
+
+.cm-activeLine {
+  background-color: rgba(30, 41, 59, 0.45) !important;
+}
+
+.cm-activeLineGutter {
+  background-color: rgba(30, 41, 59, 0.7) !important;
+  color: #D4FF00 !important;
+  font-weight: 600 !important;
+}
+
+.cm-placeholder {
+  color: #94A3B8 !important; /* Brighter placeholder */
+  font-style: italic !important;
+  opacity: 0.8 !important;
+}
+
+.cm-focused {
+  outline: none !important;
+}
+
+/* Customized Syntax Highlighting (Muted dark theme neon-volt jewels) */
+/* CodeMirror 6 tags inside react-codemirror utilize these classes based on the parser */
+.cm-keyword,
+.tok-keyword,
+.tok-operator {
+  color: #D4FF00 !important; /* Cyber Volt for SELECT, FROM, JOIN */
+  font-weight: 700 !important;
+}
+
+.cm-string,
+.tok-string {
+  color: #34D399 !important; /* Premium emerald string */
+}
+
+.cm-number,
+.tok-number,
+.tok-bool {
+  color: #FB923C !important; /* Muted vibrant orange for numbers and booleans */
+  font-weight: 500 !important;
+}
+
+.cm-comment,
+.tok-comment {
+  color: #CBD5E1 !important; /* Much brighter gray for SQL comments */
+  font-style: italic !important;
+}
+
+.cm-type,
+.tok-type,
+.cm-builtin,
+.tok-builtin {
+  color: #38BDF8 !important; /* Sky/Aqua blue for SQL functions */
+}
+
+.cm-variableName,
+.tok-variableName,
+.cm-propertyName,
+.tok-propertyName {
+  color: #FFFFFF !important; /* Pure white for columns, tables */
+}
+
+@layer base {
+  :root {
+    /* Force hex for all standard Tailwind variables that might use oklab/oklch */
+    --tw-ring-color: rgba(59, 130, 246, 0.5) !important;
+    --tw-ring-offset-color: #ffffff !important;
+    --tw-shadow: 0 0 #0000 !important;
+    --tw-shadow-colored: 0 0 #0000 !important;
+    --tw-outline-color: currentColor !important;
+  }
+
+  *, ::before, ::after {
+    --tw-ring-color: rgba(59, 130, 246, 0.5);
+    --tw-shadow: 0 0 #0000;
+    --tw-shadow-colored: 0 0 #0000;
+  }
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom scrollbar for a cleaner look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.prose {
+  direction: rtl;
+}
+
+.prose p {
+  margin-bottom: 1em;
+}
+
+.prose code {
+  background: #f1f5f9;
+  padding: 0.2em 0.4em;
+  border-radius: 0.3em;
+  font-size: 0.9em;
+}

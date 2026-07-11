@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Rubik", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+  --font-mono: "Fira Code", monospace;
+
+  /* Custom Rose-Neutral palette references */
+  --color-neutral-pink-50: #fdf8f8;
+  --color-neutral-pink-100: #fbf0f0;
+  --color-neutral-pink-200: #f7dddd;
+  --color-neutral-pink-300: #f0c2c2;
+  --color-neutral-pink-400: #e59e9e;
+  --color-neutral-pink-500: #d67a7a;
+  --color-neutral-pink-600: #c15b5b;
+  --color-neutral-pink-700: #a24646;
+  --color-neutral-pink-800: #863d3d;
+  --color-neutral-pink-900: #703636;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-neutral-pink-50);
+  color: #374151; /* neutral text */
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  direction: rtl; /* RTL as standard for Hebrew system */
+}
+
+/* Custom soft scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-neutral-pink-100);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-pink-300);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-pink-400);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-pink-200);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-pink-300);
+}
+

@@ -1,0 +1,6 @@
+{
+  "name": "SQL Insurance Pro",
+  "description": "A professional SQL practice platform for the elementary insurance domain, featuring complex business queries, adaptive user-level progression, and ERD visualization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
