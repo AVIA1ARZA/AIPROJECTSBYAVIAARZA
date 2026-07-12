@@ -122,4 +122,6 @@ export interface Candidate extends CandidateEvaluation {
   pdfBase64?: string;
   pdfMimeType?: string;
   activityLog?: ActivityLogEntry[];
+  recruiterRating?: number; // 1-5 stars
+  internalNotes?: string; // confidential internal notes for the team
 }

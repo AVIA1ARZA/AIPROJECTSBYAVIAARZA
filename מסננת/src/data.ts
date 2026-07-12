@@ -1,6 +1,38 @@
-import { Business, Department, Job, Candidate } from "./types";
+import { Business, Department, Team, Job, Candidate } from "./types";
 
 export const initialBusinesses: Business[] = [
+  {
+    id: "biz-fictional",
+    name: "טק-פלואו פתרונות תוכנה",
+    industry: "הייטק ובינה מלאכותית",
+    location: "חיפה (היברידי)",
+    size: "11-50 עובדים",
+    description: "חברה מובילה לפיתוח פתרונות SaaS מבוססי בינה מלאכותית וניהול חכם של תהליכים ארגוניים.",
+    createdAt: "2026-07-10T08:00:00Z",
+    questions: [
+      {
+        id: "q-1",
+        question: "מהו תחום הפעילות המרכזי של החברה?",
+        category: "industry",
+        type: "select",
+        options: ["פינטק", "בריאות/טק", "ביטוח", "קמעונאות", "סייבר", "אחר"],
+        placeholder: "פרט כאן במידת הצורך..."
+      },
+      {
+        id: "q-2",
+        question: "מהו המודל העסקי המרכזי?",
+        category: "industry",
+        type: "select",
+        options: ["B2B SaaS", "B2C", "B2B2C", "פרויקטאלי", "שירותים מנוהלים"],
+        placeholder: "פרט כאן במידת הצורך..."
+      }
+    ],
+    answers: {
+      "q-1_select": "הייטק ובינה מלאכותית",
+      "q-2_select": "B2B SaaS"
+    },
+    dnaSummary: "טק-פלואו משלבת מצוינות טכנולוגית בלתי מתפשרת עם תרבות ארגונית פתוחה, תומכת ומעודדת חדשנות. אנו שמים דגש רב על פיתוח מקצועי, איזון בית-עבודה ועבודה בצוותים קטנים וממוקדים."
+  },
   {
     id: "biz-1",
     name: "נובה סופט בע\"מ",
@@ -72,7 +104,7 @@ export const initialBusinesses: Business[] = [
       },
       {
         id: "aq-2",
-        question: "כיצד הפירמה מתמודדת עם תקופות 'עונת הלחץ' (Busy Season)?",
+        question: "כיצד הפירמה מתמודדת WITH תקופות 'עונת הלחץ' (Busy Season)?",
         category: "culture",
         type: "select",
         options: ["שעות עבודה אינטנסיביות", "תגבור של כוח אדם חיצוני", "חלוקת עומסים גמישה"],
@@ -95,11 +127,25 @@ export const initialBusinesses: Business[] = [
     questions: [],
     answers: {},
     dnaSummary: "פרופיל כללי - גמישות והתאמה רחבה.",
-    createdAt: new Date().toISOString()
+    createdAt: "2026-07-12T00:00:00Z"
   }
 ];
 
 export const initialDepartments: Department[] = [
+  {
+    id: "dept-fictional-1",
+    businessId: "biz-fictional",
+    name: "מחלקת פיתוח והנדסה (Engineering)",
+    dnaSummary: "הלב הטכנולוגי של החברה, העוסק בפיתוח אלגוריתמים מתקדמים, מודלים של למידת מכונה וארכיטקטורת ענן מורכבת.",
+    createdAt: "2026-07-10T08:05:00Z"
+  },
+  {
+    id: "dept-fictional-2",
+    businessId: "biz-fictional",
+    name: "מחלקת מוצר וחווית משתמש (Product & Design)",
+    dnaSummary: "המחלקה האחראית על עיצוב המוצר, ממשק המשתמש וחוויית המשתמש, תוך דגש על פשטות, אסתטיקה ושימושיות.",
+    createdAt: "2026-07-10T08:10:00Z"
+  },
   {
     id: "dept-1",
     businessId: "biz-1",
@@ -130,7 +176,52 @@ export const initialDepartments: Department[] = [
   }
 ];
 
+export const initialTeams: Team[] = [
+  {
+    id: "team-fictional-1",
+    businessId: "biz-fictional",
+    departmentId: "dept-fictional-1",
+    name: "צוות אלגוריתמים ו-AI (Core AI Team)",
+    dnaSummary: "צוות מחקר ופיתוח מהיר המתמחה בעיבוד שפה טבעית (NLP), ממודלי שפה (LLMs) ופתרון בעיות מורכבות.",
+    createdAt: "2026-07-10T08:15:00Z"
+  },
+  {
+    id: "team-fictional-2",
+    businessId: "biz-fictional",
+    departmentId: "dept-fictional-2",
+    name: "צוות עיצוב וממשק (UI/UX Team)",
+    dnaSummary: "צוות יצירתי המתמקד במיקרו-אינטראקציות, טיפוגרפיה, אסתטיקה מודרנית ועיצוב ממשקים עוצמתיים.",
+    createdAt: "2026-07-10T08:20:00Z"
+  }
+];
+
 export const initialJobs: Job[] = [
+  {
+    id: "job-fictional-1",
+    businessId: "biz-fictional",
+    departmentId: "dept-fictional-1",
+    teamId: "team-fictional-1",
+    departmentName: "מחלקת פיתוח והנדסה (Engineering)",
+    teamName: "צוות אלגוריתמים ו-AI (Core AI Team)",
+    title: "מפתח/ת בינה מלאכותית ולמידת מכונה (AI Engineer)",
+    location: "חיפה (היברידי)",
+    description: "אנו מחפשים מהנדס/ת AI מנוסה להצטרפות לצוות ה-Core AI שלנו. התפקיד כולל פיתוח ואינטגרציה של מודלי שפה, אופטימיזציה של פרומפטים ובניית סוכני AI חכמים.",
+    requirements: "לפחות 3 שנות ניסיון בפיתוח Python, ניסיון מעשי בעבודה עם ספריות ML (PyTorch/TensorFlow), ניסיון מעשי עם APIs של LLMs (כמו Gemini, OpenAI), ידע בעיבוד שפה טבעית (NLP), ויכולת פתרון בעיות אלגוריתמיות מורכבות.",
+    createdAt: "2026-07-11T10:00:00Z"
+  },
+  {
+    id: "job-fictional-2",
+    businessId: "biz-fictional",
+    departmentId: "dept-fictional-2",
+    teamId: "team-fictional-2",
+    departmentName: "מחלקת מוצר וחווית משתמש (Product & Design)",
+    teamName: "צוות עיצוב וממשק (UI/UX Team)",
+    title: "מעצב/ת חווית משתמש בכיר/ה (Senior Product Designer)",
+    location: "חיפה (היברידי)",
+    description: "אנו מחפשים מעצב/ת מוצר מוכשר/ת עם חוש אסתטי מפותח ותשוקה ליצירת ממשקים פשוטים ומרהיבים למוצרי ה-SaaS שלנו.",
+    requirements: "לפחות 4 שנות ניסיון בעיצוב מוצרים דיגיטליים (SaaS יתרון משמעותי), שליטה אבסולוטית ב-Figma, ניסיון ביצירת Design Systems, הבנה מעמיקה בחקר משתמשים ומיקרו-אינטראקציות, תיק עבודות מרשים חובה.",
+    createdAt: "2026-07-11T11:00:00Z"
+  },
   {
     id: "job-1",
     businessId: "biz-1",
@@ -168,6 +259,93 @@ export const initialJobs: Job[] = [
 
 export const initialCandidates: Candidate[] = [
   {
+    id: "cand-fictional-1",
+    jobId: "job-fictional-1",
+    name: "רוני אלטמן",
+    email: "roni.altman@example.com",
+    phone: "054-7778899",
+    skills: ["Python", "PyTorch", "NLP", "LLMs", "LangChain", "Machine Learning", "Prompt Engineering"],
+    suitabilityScore: 92,
+    suitabilityCategory: "excellent",
+    summary: "רוני היא מהנדסת אלגוריתמים מוכשרת עם רקע אקדמי וניסיון מעשי עשיר בבניית סוכני AI ועיבוד שפה טבעית. היא הציגה פרויקטים מתקדמים של אינטגרציית מודלי שפה והתאמה אישית של סוכנים לצרכים ארגוניים.",
+    strengths: [
+      "ניסיון מעמיק ומעשי ב-Python ובספריות ML מובילות",
+      "הבנה עמוקה של עולמות ה-LLM וכלים מודרניים כמו LangChain",
+      "יכולת עבודה עצמאית גבוהה ויכולת פתרון בעיות מורכבות"
+    ],
+    weaknesses: [
+      "פחות ניסיון בעבודה בסביבות ענן מורכבות (AWS/GCP), אם כי יש לה היכרות בסיסית"
+    ],
+    recommendation: "להזמין לראיון טכני בהקדם האפשרי. היא מתאימה בצורה מדהימה לדרישות התפקיד ול-DNA של הצוות.",
+    skillScores: {
+      "Python/ML": 95,
+      "LLMs & NLP": 94,
+      "Architecture": 88,
+      "Problem Solving": 96,
+      "Soft Skills": 85,
+      "DNA Fit": 92
+    },
+    skillExplanations: {
+      "Python/ML": "שליטה מעולה ב-Python ופיתוח מודלי למידת מכונה.",
+      "LLMs & NLP": "ניסיון מעשי עשיר עם מודלי שפה וספריות לעיבוד שפה טבעית.",
+      "Architecture": "הבנה טובה של תכנון מערכות תוכנה חכמות.",
+      "Problem Solving": "חשיבה אנליטית יוצאת דופן ופתרון בעיות מורכבות.",
+      "Soft Skills": "תקשורת טובה, עובדת מצוין בצוות ומסבירה רעיונות מורכבים בבהירות.",
+      "DNA Fit": "רמת מחויבות גבוהה ורצון לחדשנות התואמים את רוח טק-פלואו."
+    },
+    status: "new",
+    appliedAt: "2026-07-11T12:00:00Z",
+    fileName: "Roni_Altman_CV.pdf",
+    activityLog: []
+  },
+  {
+    id: "cand-fictional-2",
+    jobId: "job-fictional-2",
+    name: "תומר שגב",
+    email: "tomer.segev@example.com",
+    phone: "052-5556677",
+    skills: ["Figma", "UI/UX Design", "Design Systems", "Prototyping", "User Research", "Interaction Design"],
+    suitabilityScore: 89,
+    suitabilityCategory: "good",
+    summary: "תומר הוא מעצב מוצר יצירתי ומנוסה מאוד עם תיק עבודות מרשים של פלטפורמות SaaS מורכבות. יש לו עין חדה לטיפוגרפיה, מרווחים, ואנימציות ממשק, וניסיון עבודה קרוב עם מפתחי פרונטאנד.",
+    strengths: [
+      "שליטה מוחלטת ב-Figma ובניית Design Systems מורכבים וסקיילביליים",
+      "חשיבה עיצובית ממוקדת משתמש ורקע חזק בחקר משתמשים",
+      "יחסי אנוש מעולים ויכולת שיתוף פעולה הדוק עם צוותי הפיתוח"
+    ],
+    weaknesses: [
+      "ניסיון פחות עשיר בעיצוב לאפליקציות מובייל Native (רוב הניסיון שלו הוא ב-Web SaaS)"
+    ],
+    recommendation: "מועמד חזק מאוד עם תיק עבודות בולט. מומלץ להתקדם איתו לראיון פורטפוליו.",
+    skillScores: {
+      "Figma": 98,
+      "UI/UX Design": 92,
+      "Design Systems": 95,
+      "Collaboration": 90,
+      "User Research": 82,
+      "DNA Fit": 89
+    },
+    skillExplanations: {
+      "Figma": "מומחיות מוחלטת בבנייה ותחזוקה של רכיבים ופרוטוטייפים ב-Figma.",
+      "UI/UX Design": "הבנה מעולה באסתטיקה מודרנית וחוויית משתמש חלקה.",
+      "Design Systems": "ניסיון מוכח ביצירת ותיעוד שפה עיצובית אחידה לחברה.",
+      "Collaboration": "תקשורת מצוינת עם מתכנתים לצורך יישום מדויק של העיצובים.",
+      "User Research": "יכולת טובה לבצע ראיונות משתמשים ולתרגם פידבקים לשיפורים.",
+      "DNA Fit": "יצירתיות, פתיחות מחשבתית ורוח צוותית התואמים את ה-DNA של טק-פלואו."
+    },
+    status: "interview_pending",
+    appliedAt: "2026-07-11T13:00:00Z",
+    fileName: "Tomer_Segev_Portfolio_CV.pdf",
+    activityLog: [
+      {
+        id: "l-fictional-1",
+        timestamp: "2026-07-12T09:00:00Z",
+        action: "ראיון טלפוני",
+        note: "שיחה נהדרת, מציג בגרות מקצועית גבוהה ותיאום ציפיות מעולה."
+      }
+    ]
+  },
+  {
     id: "cand-1",
     jobId: "job-1",
     name: "יובל אריאל",
@@ -186,56 +364,49 @@ export const initialCandidates: Candidate[] = [
     weaknesses: [
       "אין ניסיון נרחב בפיתוח צד שרת (Backend) - אך מצהיר על נכונות ללמוד זאת בהמשך"
     ],
-    recommendation: "להזמין לראיון פרונטלי במיידי. מדובר במועמד מצוין שמציג התאמה מקסימלית לצוות ולדרישות הטכניות.",
+    recommendation: "להזמין לראיון פרונטאנד מקיף עם ראש הצוות. מדובר במועמד מצוין.",
     skillScores: {
-      "React/Frontend": 98,
-      "TypeScript": 95,
-      "UI/UX & Design": 90,
+      "React/Frontend": 95,
+      "TypeScript": 92,
+      "UI/UX & Design": 88,
       "Architecture": 85,
-      "Soft Skills": 92,
+      "Soft Skills": 90,
       "DNA Fit": 94
     },
     skillExplanations: {
       "React/Frontend": "מומחיות מוכחת ב-React עם ניסיון בפרויקטים מורכבים.",
       "TypeScript": "שימוש מתקדם ב-TypeScript כולל Generics ו-Types מורכבים.",
       "UI/UX & Design": "הבנה עמוקה בעיצוב ממשקים וחווית משתמש.",
-      "Architecture": "ניסיון טוב בתכנון מערכות, אם כי יש מקום לשיפור ב-Microservices.",
+      "Architecture": "הבנה טובה של תכנון מערכות, אם כי יש מקום לשיפור ב-Microservices.",
       "Soft Skills": "יכולת תקשורת מצוינת ועבודה בצוות.",
       "DNA Fit": "ערכי המועמד תואמים בדיוק את התרבות הארגונית של החברה."
     },
-    status: "interview_pending",
-    appliedAt: "2026-06-11T11:20:00Z",
+    status: "new",
+    appliedAt: "2026-06-12T09:30:00Z",
     fileName: "Yuval_Ariel_CV.pdf",
-    activityLog: [
-      {
-        id: "l1",
-        timestamp: "2026-06-12T10:00:00Z",
-        action: "ראיון טלפוני",
-        note: "שיחה מעולה, נשמע מאוד מקצועי ומתאים ל-DNA של הצוות."
-      }
-    ]
+    activityLog: []
   },
   {
     id: "cand-2",
     jobId: "job-1",
     name: "דניאל קליין",
     email: "daniel.k@example.com",
-    phone: "052-9876543",
-    skills: ["React", "JavaScript", "HTML5", "CSS3", "Bootstrap", "Git", "GitHub"],
+    phone: "050-9876543",
+    skills: ["HTML", "CSS", "JavaScript", "React", "Git", "Bootstrap"],
     suitabilityScore: 68,
     suitabilityCategory: "borderline",
-    summary: "דניאל הוא מפתח ג'וניור מפתחות עם כחצי שנה של שירות כפרילנסר וקורס פיתוח אינטנסיבי. הוא מראה פוטנציאל גבוה, אך חסר את שנות הניסיון הרבות והבקיאות הנדרשת ב-TypeScript ו-Tailwind (הוא בעיקר משתמש ב-Bootstrap ו-Pure CSS).",
+    summary: "דניאל הוא בוגר קורס פיתוח Fullstack טרי שמחפש את תפקידו הראשון בתעשייה. יש לו מוטיבציה פנטסטית ויכולת למידה עצמית גבוהה, אך הוא עדיין חסר ניסיון מעשי בפרויקטים מורכבים בסקייל גדול, ובשימוש בטכנולוגיות מתקדמות כמו TypeScript ו-Tailwind CSS.",
     strengths: [
-      "מוטיבציה גבוהה במיוחד ופרויקטים אישיים נחמדים המציגים יכולת פתרון בעיות בסיסית",
-      "ידע חזק ב-JavaScript גנרי וארכיטקטורה בסיסית של React",
-      "יכולת למידה מהירה ורצון רב להשקיע"
+      "מוטיבציה גבוהה מאוד ותשוקה אמיתית לתחום הפיתוח",
+      "יכולת למידה עצמית מוכחת (בנה מספר פרויקטים אישיים במהלך הקורס)",
+      "יחסי אנוש טובים וגישה חיובית"
     ],
     weaknesses: [
-      "חוסר ניסיון משמעותי במערכות מורכבות/פרויקטים ארגוניים",
-      "אין ידע מעשי ב-TypeScript, המהווה דרישה מרכזית במשרה",
-      "אין היכרות עם Tailwind CSS"
+      "חוסר ניסיון תעסוקתי/מעשי בפרויקטים אמיתיים",
+      "היכרות שטחית בלבד עם TypeScript וספריות ניהול סטייט מורכבות",
+      "קושי בתכנון ארכיטקטורה מורכבת של קוד"
     ],
-    recommendation: "פרופיל ג'וניור שאינו עונה על הצורך של מפתח בכיר. כרגע לא מומלץ להמשיך למשרה הנוכחית, אך שווה לשמור את קורות החיים למשרת מתחילים עתידית.",
+    recommendation: "אינו מתאים למשרה הבכירה הנוכחית. מומלץ לשמור את קורות החיים למשרת מתחילים עתידית.",
     skillScores: {
       "React/Frontend": 70,
       "JavaScript": 75,

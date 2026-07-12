@@ -43,20 +43,33 @@ import {
   Check,
   Calendar,
   X,
-  Eye
+  Eye,
+  Star,
+  Lock,
+  Send
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer 
 } from 'recharts';
 import { Business, Department, Team, Job, Candidate, CandidateStatus, SuitabilityCategory, RankedRequirement, ActivityLogEntry, CaseStudy, CaseStudyPreference } from "./types";
-import { initialBusinesses, initialDepartments, initialJobs, initialCandidates } from "./data";
+import { initialBusinesses, initialDepartments, initialTeams, initialJobs, initialCandidates } from "./data";
 
 export default function App() {
   // --- UI STATES ---
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [showBusinessModal, setShowBusinessModal] = useState(false);
   const [showTeamModal, setShowTeamModal] = useState(false);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [taskModalEditingLogId, setTaskModalEditingLogId] = useState<string | null>(null);
+  const [taskModalJobId, setTaskModalJobId] = useState("");
+  const [taskModalCandidateId, setTaskModalCandidateId] = useState("");
+  const [taskModalAction, setTaskModalAction] = useState("");
+  const [taskModalNote, setTaskModalNote] = useState("");
+  const [taskModalReminderDate, setTaskModalReminderDate] = useState("");
+  const [taskModalIsCompleted, setTaskModalIsCompleted] = useState(false);
+  const [taskModalStrengths, setTaskModalStrengths] = useState("");
+  const [taskModalWeaknesses, setTaskModalWeaknesses] = useState("");
 
   // --- DATABASE STATES ---
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -139,6 +152,7 @@ export default function App() {
   const [calibratingJobId, setCalibratingJobId] = useState<string | null>(null);
 
   // --- NEW JOB FORM STATE ---
+  const [selectedBusinessIdForNewJob, setSelectedBusinessIdForNewJob] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [selectedDeptId, setSelectedDeptId] = useState("");
   const [selectedTeamId, setSelectedTeamId] = useState("");
@@ -170,6 +184,91 @@ export default function App() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [skillSearch, setSkillSearch] = useState("");
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [localRecruiterRating, setLocalRecruiterRating] = useState<number | undefined>(undefined);
+  const [localInternalNotes, setLocalInternalNotes] = useState<string>("");
+
+  // --- AUTO REJECT STATES ---
+  const [autoRejectEnabled, setAutoRejectEnabled] = useState<boolean>(() => {
+    return localStorage.getItem("screener_auto_reject_enabled") === "true";
+  });
+  const [autoRejectMinScore, setAutoRejectMinScore] = useState<number>(() => {
+    const saved = localStorage.getItem("screener_auto_reject_min_score");
+    return saved ? parseInt(saved, 10) : 50;
+  });
+  const [autoRejectUnsuitable, setAutoRejectUnsuitable] = useState<boolean>(() => {
+    return localStorage.getItem("screener_auto_reject_unsuitable") !== "false";
+  });
+
+  const saveAutoRejectSettings = (enabled: boolean, minScore: number, unsuitable: boolean) => {
+    setAutoRejectEnabled(enabled);
+    setAutoRejectMinScore(minScore);
+    setAutoRejectUnsuitable(unsuitable);
+    localStorage.setItem("screener_auto_reject_enabled", String(enabled));
+    localStorage.setItem("screener_auto_reject_min_score", String(minScore));
+    localStorage.setItem("screener_auto_reject_unsuitable", String(unsuitable));
+  };
+
+  useEffect(() => {
+    if (selectedCandidate) {
+      setLocalRecruiterRating(selectedCandidate.recruiterRating);
+      setLocalInternalNotes(selectedCandidate.internalNotes || "");
+    } else {
+      setLocalRecruiterRating(undefined);
+      setLocalInternalNotes("");
+    }
+  }, [selectedCandidate?.id]);
+
+  const [emailTemplateType, setEmailTemplateType] = useState<"interview" | "rejection">("interview");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [isEmailBoxOpen, setIsEmailBoxOpen] = useState(false);
+  const [lastCreatedLogId, setLastCreatedLogId] = useState<string | null>(null);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+
+  useEffect(() => {
+    if (!selectedCandidate) {
+      setEmailSubject("");
+      setEmailBody("");
+      return;
+    }
+
+    const job = jobs.find(j => j.id === selectedCandidate.jobId);
+    const biz = job ? businesses.find(b => b.id === job.businessId) : null;
+    const candidateName = selectedCandidate.name;
+    const jobTitle = job?.title || "המשרה";
+    const companyName = biz?.name || "חברתנו";
+
+    if (emailTemplateType === "interview") {
+      setEmailSubject(`זימון לראיון עבור משרת ${jobTitle} - ${companyName}`);
+      setEmailBody(
+`שלום ${candidateName},
+
+שמחנו מאוד לקבל את מועמדותך למשרת ${jobTitle} בחברת ${companyName}.
+
+לאחר שבחנו את קורות החיים שלך בעיון, נשמח להזמין אותך לראיון טלפוני ראשוני על מנת להכיר טוב יותר ולדבר על התפקיד.
+
+נשמח אם תוכל/י להשיב למייל זה עם מספר מועדים נוחים עבורך לשיחה במהלך הימים הקרובים.
+
+בברכה,
+צוות הגיוס של ${companyName}`
+      );
+    } else {
+      setEmailSubject(`עדכון בנוגע למועמדותך למשרת ${jobTitle} - ${companyName}`);
+      setEmailBody(
+`שלום ${candidateName},
+
+אנו רוצים להודות לך על העניין שהבעת בחברת ${companyName} ועל הזמן שהקדשת להגשת מועמדותך למשרת ${jobTitle}.
+
+קיבלנו פניות רבות ממועמדים מצוינים, ולאחר תהליך סינון קפדני, החלטנו להתקדם עם מועמדים שפרופיל הניסיון שלהם תואם בצורה המדויקת ביותר את דרישות המשרה הנוכחיות.
+
+אנו נשמור את פרטיך במאגר הגיוס שלנו למשרות רלוונטיות בעתיד, ומאחלים לך המון בהצלחה בהמשך הדרך המקצועית.
+
+בברכה,
+צוות הגיוס של ${companyName}`
+      );
+    }
+  }, [selectedCandidate?.id, emailTemplateType, jobs, businesses]);
+
   const [newLogAction, setNewLogAction] = useState("");
   const [newLogNote, setNewLogNote] = useState("");
   const [newLogReminderDate, setNewLogReminderDate] = useState("");
@@ -188,6 +287,17 @@ export default function App() {
   // --- TOAST SYSTEM ---
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
+  // --- USER GUIDE STATES ---
+  const [showUserGuide, setShowUserGuide] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("masenat_guide_dismissed") !== "true";
+    } catch {
+      return true;
+    }
+  });
+  const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
+  const [guideStep, setGuideStep] = useState<number>(0);
+
   // Load from localStorage on mount
   useEffect(() => {
     const savedBusinesses = localStorage.getItem("screener_businesses");
@@ -196,44 +306,107 @@ export default function App() {
     const savedJobs = localStorage.getItem("screener_jobs");
     const savedCandidates = localStorage.getItem("screener_candidates");
 
+    // 1. Businesses
+    let finalBiz = initialBusinesses;
     if (savedBusinesses) {
-      const parsedBiz = JSON.parse(savedBusinesses);
-      setBusinesses(parsedBiz);
-      if (parsedBiz.length > 0) {
-        setActiveBusinessId(parsedBiz[0].id);
+      try {
+        const parsed = JSON.parse(savedBusinesses);
+        const hasFictional = parsed.some((b: any) => b.id === "biz-fictional");
+        if (!hasFictional) {
+          const fictionalBiz = initialBusinesses.find(b => b.id === "biz-fictional");
+          if (fictionalBiz) parsed.push(fictionalBiz);
+        }
+        finalBiz = parsed;
+      } catch (e) {
+        console.error("Error parsing saved businesses", e);
       }
-    } else {
-      setBusinesses(initialBusinesses);
-      setActiveBusinessId(initialBusinesses[0].id);
-      localStorage.setItem("screener_businesses", JSON.stringify(initialBusinesses));
+    }
+    setBusinesses(finalBiz);
+    localStorage.setItem("screener_businesses", JSON.stringify(finalBiz));
+
+    // Default to the fictional demo business if it exists
+    const hasFictionalInFinal = finalBiz.some(b => b.id === "biz-fictional");
+    if (hasFictionalInFinal) {
+      setActiveBusinessId("biz-fictional");
+    } else if (finalBiz.length > 0) {
+      setActiveBusinessId(finalBiz[0].id);
     }
 
+    // 2. Departments
+    let finalDepts = initialDepartments;
     if (savedDepts) {
-      setDepartments(JSON.parse(savedDepts));
-    } else {
-      setDepartments(initialDepartments);
-      localStorage.setItem("screener_departments", JSON.stringify(initialDepartments));
+      try {
+        const parsed = JSON.parse(savedDepts);
+        const fictionalDepts = initialDepartments.filter(d => d.businessId === "biz-fictional");
+        fictionalDepts.forEach(fDept => {
+          if (!parsed.some((d: any) => d.id === fDept.id)) {
+            parsed.push(fDept);
+          }
+        });
+        finalDepts = parsed;
+      } catch (e) {
+        console.error("Error parsing saved departments", e);
+      }
     }
+    setDepartments(finalDepts);
+    localStorage.setItem("screener_departments", JSON.stringify(finalDepts));
 
+    // 3. Teams
+    let finalTeams = initialTeams;
     if (savedTeams) {
-      setTeams(JSON.parse(savedTeams));
-    } else {
-      setTeams([]);
+      try {
+        const parsed = JSON.parse(savedTeams);
+        const fictionalTeams = initialTeams.filter(t => t.businessId === "biz-fictional");
+        fictionalTeams.forEach(fTeam => {
+          if (!parsed.some((t: any) => t.id === fTeam.id)) {
+            parsed.push(fTeam);
+          }
+        });
+        finalTeams = parsed;
+      } catch (e) {
+        console.error("Error parsing saved teams", e);
+      }
     }
+    setTeams(finalTeams);
+    localStorage.setItem("screener_teams", JSON.stringify(finalTeams));
 
+    // 4. Jobs
+    let finalJobs = initialJobs;
     if (savedJobs) {
-      setJobs(JSON.parse(savedJobs));
-    } else {
-      setJobs(initialJobs);
-      localStorage.setItem("screener_jobs", JSON.stringify(initialJobs));
+      try {
+        const parsed = JSON.parse(savedJobs);
+        const fictionalJobs = initialJobs.filter(j => j.businessId === "biz-fictional");
+        fictionalJobs.forEach(fJob => {
+          if (!parsed.some((j: any) => j.id === fJob.id)) {
+            parsed.push(fJob);
+          }
+        });
+        finalJobs = parsed;
+      } catch (e) {
+        console.error("Error parsing saved jobs", e);
+      }
     }
+    setJobs(finalJobs);
+    localStorage.setItem("screener_jobs", JSON.stringify(finalJobs));
 
+    // 5. Candidates
+    let finalCandidates = initialCandidates;
     if (savedCandidates) {
-      setCandidates(JSON.parse(savedCandidates));
-    } else {
-      setCandidates(initialCandidates);
-      localStorage.setItem("screener_candidates", JSON.stringify(initialCandidates));
+      try {
+        const parsed = JSON.parse(savedCandidates);
+        const fictionalCands = initialCandidates.filter(c => c.id.startsWith("cand-fictional-"));
+        fictionalCands.forEach(fCand => {
+          if (!parsed.some((c: any) => c.id === fCand.id)) {
+            parsed.push(fCand);
+          }
+        });
+        finalCandidates = parsed;
+      } catch (e) {
+        console.error("Error parsing saved candidates", e);
+      }
     }
+    setCandidates(finalCandidates);
+    localStorage.setItem("screener_candidates", JSON.stringify(finalCandidates));
   }, []);
 
   // Helper functions to save state & sync to localStorage
@@ -1180,11 +1353,20 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Calendar Grid */}
           <div className="lg:col-span-2 bg-white/95 p-6 rounded-3xl border border-neutral-pink-200/80 shadow-md">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Calendar className="w-6 h-6 text-neutral-pink-500" />
-                יומן גיוס מרכזי
-              </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Calendar className="w-6 h-6 text-neutral-pink-500" />
+                  יומן גיוס מרכזי
+                </h2>
+                <button
+                  onClick={() => handleOpenAddTask()}
+                  className="bg-neutral-pink-500 hover:bg-neutral-pink-600 text-white font-bold text-[11px] px-3.5 py-1.5 rounded-full shadow-sm transition flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>משימה חדשה</span>
+                </button>
+              </div>
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}
@@ -1204,13 +1386,13 @@ export default function App() {
               </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-2 mb-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">
               {dayNames.map(day => <div key={day}>{day}</div>)}
             </div>
 
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2">
               {calendarDays.map((date, idx) => {
-                if (!date) return <div key={`empty-${idx}`} className="h-24 bg-gray-50/30 rounded-xl"></div>;
+                if (!date) return <div key={`empty-${idx}`} className="h-16 sm:h-24 bg-gray-50/30 rounded-xl"></div>;
                 
                 const isToday = date.toDateString() === new Date().toDateString();
                 const dayTasks = allScheduledTasks.filter(task => 
@@ -1218,9 +1400,13 @@ export default function App() {
                 );
 
                 return (
-                  <div key={date.toISOString()} className={`h-24 p-1.5 border rounded-xl flex flex-col gap-1 transition-all ${
-                    isToday ? "border-neutral-pink-300 bg-neutral-pink-50/30" : "border-gray-100 bg-white hover:border-neutral-pink-100"
-                  }`}>
+                  <div 
+                    key={date.toISOString()} 
+                    onClick={() => handleOpenAddTask(date)}
+                    className={`h-16 sm:h-24 p-1 sm:p-1.5 border rounded-xl flex flex-col gap-1 transition-all cursor-pointer ${
+                      isToday ? "border-neutral-pink-300 bg-neutral-pink-50/30 hover:bg-neutral-pink-50/50" : "border-gray-100 bg-white hover:border-neutral-pink-100 hover:bg-gray-50/50"
+                    }`}
+                  >
                     <span className={`text-[10px] font-bold ${isToday ? "text-neutral-pink-600" : "text-gray-400"}`}>
                       {date.getDate()}
                     </span>
@@ -1228,15 +1414,14 @@ export default function App() {
                       {dayTasks.map(task => (
                         <div 
                           key={task.id}
-                          onClick={() => {
-                            const cand = candidates.find(c => c.id === task.candidateId);
-                            if (cand) {
-                              setSelectedCandidate(cand);
-                              setCurrentTab("candidates-status");
-                            }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEditTask(task);
                           }}
                           className={`px-1.5 py-0.5 rounded text-[8px] font-bold truncate cursor-pointer transition-colors shadow-sm ${
-                            task.isCompleted ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-neutral-pink-100 text-neutral-pink-800 border border-neutral-pink-200"
+                            task.isCompleted 
+                              ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-100" 
+                              : "bg-neutral-pink-100 hover:bg-neutral-pink-200 text-neutral-pink-800 border border-neutral-pink-200"
                           }`}
                           title={`${task.candidateName}: ${task.action}`}
                         >
@@ -1266,11 +1451,7 @@ export default function App() {
                     key={task.id} 
                     className="p-3 bg-neutral-pink-50/50 border border-neutral-pink-100 rounded-2xl flex flex-col gap-1 group hover:border-neutral-pink-300 transition-colors cursor-pointer"
                     onClick={() => {
-                      const cand = candidates.find(c => c.id === task.candidateId);
-                      if (cand) {
-                        setSelectedCandidate(cand);
-                        setCurrentTab("candidates-status");
-                      }
+                      handleOpenEditTask(task);
                     }}
                   >
                     <div className="flex items-center justify-between">
@@ -1611,6 +1792,14 @@ export default function App() {
       return;
     }
 
+    if (activeBusinessId === "all-businesses" && !selectedBusinessIdForNewJob) {
+      triggerToast("אנא בחרו עסק לשיוך המשרה", "error");
+      return;
+    }
+
+    const finalBusinessId = activeBusinessId === "all-businesses" ? selectedBusinessIdForNewJob : (activeBusinessId || undefined);
+    const resolvedBiz = businesses.find(b => b.id === finalBusinessId);
+
     const dept = departments.find(d => d.id === selectedDeptId);
     const team = teams.find(t => t.id === selectedTeamId);
 
@@ -1618,7 +1807,7 @@ export default function App() {
       const updated = jobs.map(j => j.id === editingJob.id ? {
         ...j,
         title: jobTitle,
-        location: jobLocation || activeBusiness?.location || "לא צוין",
+        location: jobLocation || resolvedBiz?.location || "לא צוין",
         description: jobDescription,
         requirements: jobRequirements,
         departmentId: selectedDeptId || undefined,
@@ -1634,13 +1823,13 @@ export default function App() {
     } else {
       const newJob: Job = {
         id: "job-" + Date.now(),
-        businessId: activeBusinessId || undefined,
+        businessId: finalBusinessId,
         departmentId: selectedDeptId || undefined,
         teamId: selectedTeamId || undefined,
         departmentName: dept ? dept.name : (selectedDeptId ? "כללי" : undefined),
         teamName: team ? team.name : undefined,
         title: jobTitle,
-        location: jobLocation || activeBusiness?.location || "לא צוין",
+        location: jobLocation || resolvedBiz?.location || "לא צוין",
         description: jobDescription,
         requirements: jobRequirements,
         rankedRequirements: extractedRankedRequirements,
@@ -1662,6 +1851,7 @@ export default function App() {
     setJobJDText("");
     setSelectedDeptId("");
     setSelectedTeamId("");
+    setSelectedBusinessIdForNewJob("");
     setExtractedRankedRequirements([]);
     setCalibrationPreferences([]);
     setCaseStudies([]);
@@ -1764,17 +1954,38 @@ export default function App() {
         }
 
         const result = await response.json();
+        
+        let initialStatus: CandidateStatus = "new";
+        let initialLogs: ActivityLogEntry[] = [];
+
+        const isLowScore = result.suitabilityScore < autoRejectMinScore;
+        const isUnsuitableCat = autoRejectUnsuitable && result.suitabilityCategory === "unsuitable";
+
+        if (autoRejectEnabled && (isLowScore || isUnsuitableCat)) {
+          initialStatus = "rejected";
+          initialLogs.push({
+            id: "log-auto-" + Date.now() + Math.random().toString(36).substr(2, 3),
+            timestamp: new Date().toISOString(),
+            action: "דחייה אוטומטית חכמה 🚫",
+            note: `המועמד/ת הועבר/ה אוטומטית לסטטוס דחוי לפי הגדרות סינון ה-HR במערכת.\n\nקריטריונים שהופעלו:\n${
+              isLowScore ? `- ציון התאמה (${result.suitabilityScore}/100) נמוך מסף המינימום (${autoRejectMinScore})\n` : ""
+            }${
+              isUnsuitableCat ? "- קטגוריית ההתאמה המערכתית נקבעה כ'לא מתאים'\n" : ""
+            }`
+          });
+        }
+
         const newCandidate: Candidate = {
           ...result,
           id: "cand-" + Date.now() + Math.random().toString(36).substr(2, 5),
           jobId: selectedJob.id,
-          status: "new",
+          status: initialStatus,
           appliedAt: new Date().toISOString(),
           fileName: currentFile ? currentFile.name : "הזנה מילולית ידנית",
           cvText: text || undefined,
           pdfBase64: currentFile ? payload.pdfBase64 : undefined,
           pdfMimeType: currentFile ? payload.pdfMimeType : undefined,
-          activityLog: []
+          activityLog: initialLogs
         };
 
         return newCandidate;
@@ -1846,6 +2057,23 @@ export default function App() {
     setDeleteConfirmId(null);
   };
 
+  const handleUpdateRecruiterFeedback = (candidateId: string, rating: number | undefined, notes: string) => {
+    const updated = candidates.map(c => {
+      if (c.id === candidateId) {
+        return { ...c, recruiterRating: rating, internalNotes: notes };
+      }
+      return c;
+    });
+    saveCandidates(updated);
+    
+    // Sync active popup
+    if (selectedCandidate && selectedCandidate.id === candidateId) {
+      setSelectedCandidate({ ...selectedCandidate, recruiterRating: rating, internalNotes: notes });
+    }
+    
+    triggerToast("הערות הדירוג והמשוב הפנימי נשמרו בהצלחה", "success");
+  };
+
   const handleAddActivityLog = () => {
     if (!selectedCandidate || !newLogAction.trim()) return;
 
@@ -1882,6 +2110,526 @@ export default function App() {
     setNewLogWeaknesses("");
     setNewLogWeaknesses("");
     triggerToast("הפעולה תועדה בהצלחה", "success");
+  };
+
+  const handleSendQuickEmail = () => {
+    if (!selectedCandidate) return;
+    if (!selectedCandidate.email) {
+      triggerToast("לא הוזן אימייל עבור המועמד/ת", "error");
+      return;
+    }
+    if (!emailSubject.trim() || !emailBody.trim()) {
+      triggerToast("יש למלא את נושא ותוכן האימייל", "error");
+      return;
+    }
+
+    const mailLogId = "email-log-" + Date.now();
+    const mailtoUrl = `mailto:${selectedCandidate.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    
+    // Add activity log entry as draft/pending
+    const actionLabel = emailTemplateType === "interview" ? "הוכנה טיוטה: זימון לראיון" : "הוכנה טיוטה: מכתב דחייה";
+    const newEntry: ActivityLogEntry = {
+      id: mailLogId,
+      timestamp: new Date().toISOString(),
+      action: actionLabel,
+      note: `נושא: ${emailSubject}\n\nתוכן המייל:\n${emailBody}`
+    };
+
+    const updatedCandidates = candidates.map(c => {
+      if (c.id === selectedCandidate.id) {
+        return {
+          ...c,
+          activityLog: [newEntry, ...(c.activityLog || [])]
+        };
+      }
+      return c;
+    });
+
+    saveCandidates(updatedCandidates);
+    setSelectedCandidate({
+      ...selectedCandidate,
+      activityLog: [newEntry, ...(selectedCandidate.activityLog || [])]
+    });
+
+    setLastCreatedLogId(mailLogId);
+    setShowEmailConfirmation(true);
+
+    // Trigger local mail app
+    window.location.href = mailtoUrl;
+
+    triggerToast("טיוטת המייל הוכנה ונפתחה בתוכנת הדואר שלך!", "success");
+  };
+
+  const handleConfirmEmailSent = (actuallySent: boolean) => {
+    if (!selectedCandidate || !lastCreatedLogId) return;
+
+    const updatedCandidates = candidates.map(c => {
+      if (c.id === selectedCandidate.id) {
+        const updatedLogs = (c.activityLog || []).map(log => {
+          if (log.id === lastCreatedLogId) {
+            let nextAction = log.action;
+            if (actuallySent) {
+              nextAction = log.action.replace("הוכנה טיוטה: ", "נשלח: ");
+            } else {
+              nextAction = log.action.replace("הוכנה טיוטה: ", "נשמר כטיוטה: ");
+            }
+            return { ...log, action: nextAction };
+          }
+          return log;
+        });
+        return { ...c, activityLog: updatedLogs };
+      }
+      return c;
+    });
+
+    saveCandidates(updatedCandidates);
+    
+    // Also update selected candidate view
+    const updatedLogs = (selectedCandidate.activityLog || []).map(log => {
+      if (log.id === lastCreatedLogId) {
+        let nextAction = log.action;
+        if (actuallySent) {
+          nextAction = log.action.replace("הוכנה טיוטה: ", "נשלח: ");
+        } else {
+          nextAction = log.action.replace("הוכנה טיוטה: ", "נשמר כטיוטה: ");
+        }
+        return { ...log, action: nextAction };
+      }
+      return log;
+    });
+    
+    setSelectedCandidate({
+      ...selectedCandidate,
+      activityLog: updatedLogs
+    });
+
+    setShowEmailConfirmation(false);
+    setLastCreatedLogId(null);
+    
+    if (actuallySent) {
+      triggerToast("הסטטוס עודכן: המייל נשלח בהצלחה! ✅", "success");
+    } else {
+      triggerToast("הסטטוס נשמר כטיוטה בלבד ⏳", "info");
+    }
+  };
+
+  const handleCancelEmailLog = () => {
+    if (!selectedCandidate || !lastCreatedLogId) return;
+
+    const updatedCandidates = candidates.map(c => {
+      if (c.id === selectedCandidate.id) {
+        const updatedLogs = (c.activityLog || []).filter(log => log.id !== lastCreatedLogId);
+        return { ...c, activityLog: updatedLogs };
+      }
+      return c;
+    });
+
+    saveCandidates(updatedCandidates);
+    
+    // Also update selected candidate view
+    const updatedLogs = (selectedCandidate.activityLog || []).filter(log => log.id !== lastCreatedLogId);
+    
+    setSelectedCandidate({
+      ...selectedCandidate,
+      activityLog: updatedLogs
+    });
+
+    setShowEmailConfirmation(false);
+    setLastCreatedLogId(null);
+    triggerToast("רישום הפעולה בוטל ונמחק מההיסטוריה 🗑️", "info");
+  };
+
+  const handleRunAutoRejection = (jobIdFilter: string = "all") => {
+    let count = 0;
+    const updatedCandidates = candidates.map(c => {
+      // Only process candidates in relevant jobId, and only those not already hired or rejected
+      const matchesJob = jobIdFilter === "all" || c.jobId === jobIdFilter;
+      const canBeRejected = c.status !== "rejected" && c.status !== "hired";
+      
+      const isLowScore = c.suitabilityScore < autoRejectMinScore;
+      const isUnsuitableCat = autoRejectUnsuitable && c.suitabilityCategory === "unsuitable";
+
+      if (matchesJob && canBeRejected && (isLowScore || isUnsuitableCat)) {
+        count++;
+        const newEntry: ActivityLogEntry = {
+          id: "log-bulk-auto-" + Date.now() + Math.random().toString(36).substr(2, 3),
+          timestamp: new Date().toISOString(),
+          action: "דחייה אוטומטית חכמה 🚫",
+          note: `המועמד/ת הועבר/ה אוטומטית לסטטוס דחוי לפי הגדרות סינון ה-HR במערכת.\n\nקריטריונים שהופעלו:\n${
+            isLowScore ? `- ציון התאמה (${c.suitabilityScore}/100) נמוך מסף המינימום (${autoRejectMinScore})\n` : ""
+          }${
+            isUnsuitableCat ? "- קטגוריית ההתאמה המערכתית נקבעה כ'לא מתאים'\n" : ""
+          }`
+        };
+
+        return {
+          ...c,
+          status: "rejected" as CandidateStatus,
+          activityLog: [newEntry, ...(c.activityLog || [])]
+        };
+      }
+      return c;
+    });
+
+    if (count > 0) {
+      saveCandidates(updatedCandidates);
+      
+      // Update selectedCandidate if it was modified
+      if (selectedCandidate) {
+        const updatedSelected = updatedCandidates.find(c => c.id === selectedCandidate.id);
+        if (updatedSelected) {
+          setSelectedCandidate(updatedSelected);
+        }
+      }
+
+      triggerToast(`בוצע סינון! ${count} מועמדים הועברו לסטטוס 'נדחה'`, "success");
+    } else {
+      triggerToast("לא נמצאו מועמדים נוספים העונים על קריטריוני הדחייה", "info");
+    }
+  };
+
+  const handleOpenAddTask = (date?: Date) => {
+    setTaskModalEditingLogId(null);
+    
+    let defaultJobId = "";
+    let defaultCandidateId = "";
+    
+    if (selectedCandidate) {
+      defaultJobId = selectedCandidate.jobId;
+      defaultCandidateId = selectedCandidate.id;
+    } else if (filterJobId && filterJobId !== "all") {
+      defaultJobId = filterJobId;
+      const matchingCands = candidates.filter(c => c.jobId === filterJobId);
+      if (matchingCands.length > 0) {
+        defaultCandidateId = matchingCands[0].id;
+      }
+    } else if (jobs.length > 0) {
+      defaultJobId = jobs[0].id;
+      const matchingCands = candidates.filter(c => c.jobId === jobs[0].id);
+      if (matchingCands.length > 0) {
+        defaultCandidateId = matchingCands[0].id;
+      }
+    }
+
+    setTaskModalJobId(defaultJobId);
+    setTaskModalCandidateId(defaultCandidateId);
+    setTaskModalAction("ראיון טלפוני");
+    setTaskModalNote("");
+    
+    let dateStr = "";
+    if (date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      dateStr = `${year}-${month}-${day}T09:00`;
+    } else {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      dateStr = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    setTaskModalReminderDate(dateStr);
+    setTaskModalIsCompleted(false);
+    setTaskModalStrengths("");
+    setTaskModalWeaknesses("");
+    setTaskModalOpen(true);
+  };
+
+  const handleOpenEditTask = (task: any) => {
+    setTaskModalEditingLogId(task.id);
+    setTaskModalCandidateId(task.candidateId);
+    
+    const cand = candidates.find(c => c.id === task.candidateId);
+    if (cand) {
+      setTaskModalJobId(cand.jobId);
+    } else {
+      setTaskModalJobId("");
+    }
+    
+    setTaskModalAction(task.action);
+    setTaskModalNote(task.note || "");
+    setTaskModalReminderDate(task.reminderDate || "");
+    setTaskModalIsCompleted(!!task.isCompleted);
+    setTaskModalStrengths(task.strengths || "");
+    setTaskModalWeaknesses(task.weaknesses || "");
+    setTaskModalOpen(true);
+  };
+
+  const handleSaveTask = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!taskModalCandidateId) {
+      triggerToast("נא לבחור מועמד עבור המשימה", "error");
+      return;
+    }
+    if (!taskModalAction.trim()) {
+      triggerToast("נא להזין כותרת למשימה", "error");
+      return;
+    }
+    if (!taskModalReminderDate) {
+      triggerToast("נא לבחור תאריך ושעה למשימה", "error");
+      return;
+    }
+
+    const updatedCandidates = candidates.map(cand => {
+      if (taskModalEditingLogId) {
+        const hasLog = (cand.activityLog || []).some(log => log.id === taskModalEditingLogId);
+        if (hasLog) {
+          if (cand.id !== taskModalCandidateId) {
+            return {
+              ...cand,
+              activityLog: (cand.activityLog || []).filter(log => log.id !== taskModalEditingLogId)
+            };
+          } else {
+            return {
+              ...cand,
+              activityLog: (cand.activityLog || []).map(log => {
+                if (log.id === taskModalEditingLogId) {
+                  return {
+                    ...log,
+                    action: taskModalAction,
+                    note: taskModalNote || undefined,
+                    reminderDate: taskModalReminderDate,
+                    isCompleted: taskModalIsCompleted,
+                    strengths: (taskModalAction.includes("ראיון") || taskModalAction.includes("משימת בית")) ? taskModalStrengths : undefined,
+                    weaknesses: (taskModalAction.includes("ראיון") || taskModalAction.includes("משימת בית")) ? taskModalWeaknesses : undefined
+                  };
+                }
+                return log;
+              })
+            };
+          }
+        }
+      }
+
+      if (cand.id === taskModalCandidateId) {
+        if (taskModalEditingLogId) {
+          const newEntry: ActivityLogEntry = {
+            id: taskModalEditingLogId,
+            timestamp: new Date().toISOString(),
+            action: taskModalAction,
+            note: taskModalNote || undefined,
+            reminderDate: taskModalReminderDate,
+            isCompleted: taskModalIsCompleted,
+            strengths: (taskModalAction.includes("ראיון") || taskModalAction.includes("משימת בית")) ? taskModalStrengths : undefined,
+            weaknesses: (taskModalAction.includes("ראיון") || taskModalAction.includes("משימת בית")) ? taskModalWeaknesses : undefined
+          };
+          return {
+            ...cand,
+            activityLog: [newEntry, ...(cand.activityLog || [])]
+          };
+        } else {
+          const newEntry: ActivityLogEntry = {
+            id: "log-" + Date.now(),
+            timestamp: new Date().toISOString(),
+            action: taskModalAction,
+            note: taskModalNote || undefined,
+            reminderDate: taskModalReminderDate,
+            isCompleted: taskModalIsCompleted,
+            strengths: (taskModalAction.includes("ראיון") || taskModalAction.includes("משימת בית")) ? taskModalStrengths : undefined,
+            weaknesses: (taskModalAction.includes("ראיון") || taskModalAction.includes("משימת בית")) ? taskModalWeaknesses : undefined
+          };
+          return {
+            ...cand,
+            activityLog: [newEntry, ...(cand.activityLog || [])]
+          };
+        }
+      }
+
+      return cand;
+    });
+
+    saveCandidates(updatedCandidates);
+    if (selectedCandidate) {
+      const updatedSelectedCand = updatedCandidates.find(c => c.id === selectedCandidate.id);
+      if (updatedSelectedCand) {
+        setSelectedCandidate(updatedSelectedCand);
+      }
+    }
+    setTaskModalOpen(false);
+    triggerToast(taskModalEditingLogId ? "המשימה עודכנה בהצלחה" : "המשימה נוספה ליומן בהצלחה", "success");
+  };
+
+  const handleDeleteTask = (logId: string) => {
+    const updatedCandidates = candidates.map(cand => {
+      return {
+        ...cand,
+        activityLog: (cand.activityLog || []).filter(log => log.id !== logId)
+      };
+    });
+    saveCandidates(updatedCandidates);
+    if (selectedCandidate) {
+      const updatedSelectedCand = updatedCandidates.find(c => c.id === selectedCandidate.id);
+      if (updatedSelectedCand) {
+        setSelectedCandidate(updatedSelectedCand);
+      }
+    }
+    setTaskModalOpen(false);
+    triggerToast("המשימה נמחקה מהיומן", "info");
+  };
+
+  const renderGuideModal = () => {
+    if (!showGuideModal) return null;
+
+    const steps = [
+      {
+        title: "שלב 1: אפיון ה-DNA של החברה",
+        icon: <Building className="w-8 h-8 text-neutral-pink-500" />,
+        color: "bg-neutral-pink-50",
+        description: "כדי לסנן קורות חיים בהתאמה מדויקת, עלינו להגדיר תחילה מי אתם.",
+        bullets: [
+          "הקימו עסק וענו על מספר שאלות קצרות המיוצרות במיוחד עבור סוג החברה שלכם.",
+          "ה-AI ינתח ויזקק את 'חתימת ה-DNA' הארגונית והתרבותית שלכם.",
+          "תוכלו להוסיף מחלקות וצוותים ספציפיים (לדוגמה: מחלקת פיתוח, צוות Frontend) כדי לאפיין את ה-DNA הפנימי המדויק ביותר שלהם."
+        ]
+      },
+      {
+        title: "שלב 2: הקמת משרה ודרישות",
+        icon: <Plus className="w-8 h-8 text-neutral-pink-500" />,
+        color: "bg-neutral-pink-50",
+        description: "מגדירים את מאפייני המשרה ותחומי העניין בצורה נוחה.",
+        bullets: [
+          "תוכלו להדביק תיאור משרה מלא (Job Description) ישירות בטקסט חופשי.",
+          "מנגנון ה-AI החכם יפרק את התיאור אוטומטית לקריטריונים ברורים ומדורגים.",
+          "הדרישות יחולקו לקטגוריות כגון: ניסיון מקצועי, השכלה, כלים טכנולוגיים ותכונות אופי המשתלבות עם ה-DNA הכללי."
+        ]
+      },
+      {
+        title: "שלב 3: העלאת קורות חיים ודירוג AI",
+        icon: <UploadCloud className="w-8 h-8 text-neutral-pink-500" />,
+        color: "bg-neutral-pink-50",
+        description: "מכניסים את קורות החיים למסננת ומקבלים תובנות עומק מיידיות.",
+        bullets: [
+          "גררו קבצי קורות חיים (PDF / DOCX) או הדביקו אותם כטקסט חופשי.",
+          "ה-AI יבצע השוואה רב-ממדית בין המועמד לבין ה-DNA של החברה, המחלקה והמשרה.",
+          "לכל מועמד ייקבע ציון התאמה משוקלל עם הסבר מנומק, פירוט חוזקות, חולשות, ואפילו התאמה תרבותית ספציפית לצוות."
+        ]
+      },
+      {
+        title: "שלב 4: השוואה מתקדמת ולוח משימות",
+        icon: <LayoutGrid className="w-8 h-8 text-neutral-pink-500" />,
+        color: "bg-neutral-pink-50",
+        description: "מעדכנים סטטוסים, משווים זה לצד זה ומקדמים את המועמדים.",
+        bullets: [
+          "סמנו מועמדים ברשימה כדי לפתוח את תפריט ההשוואה המהיר ולהשוות ביניהם ראש-בראש.",
+          "הוסיפו ועירכו משימות, ראיונות או תזכורות ישירות מתוך לוח המשימות (ביומן או באג'נדה) ע\"י לחיצה על יום בלוח או על משימה קיימת. בטופס המשימה ניתן לבחור משרה בראש הטופס כדי להציג רק מועמדים הרלוונטיים לאותה משרה.",
+          "תעדו שיחות, עדכנו סטטוסים ועקבו אחר תהליך הגיוס בתיק המועמד הדינמי.",
+          "השאירו 'דירוג כוכבים' אישי והערות פנימיות חסויות לצוות בכרטיס המועמד, המאפשרים הערכה אנושית שאינה מבוססת AI ואינה חשופה למועמד."
+        ]
+      }
+    ];
+
+    const currentStepData = steps[guideStep];
+
+    return (
+      <div className="fixed inset-0 bg-neutral-pink-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 text-right">
+        <motion.div 
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          className="bg-white p-6 sm:p-8 rounded-[2rem] border border-neutral-pink-200 shadow-2xl w-full max-w-2xl relative text-right"
+        >
+          {/* Top Progress bar */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gray-100 flex rounded-t-[2rem] overflow-hidden">
+            {steps.map((_, idx) => (
+              <div 
+                key={idx}
+                className={`h-full transition-all duration-300 ${idx <= guideStep ? "bg-neutral-pink-500" : "bg-gray-100"}`}
+                style={{ width: `${100 / steps.length}%` }}
+              />
+            ))}
+          </div>
+
+          <div className="flex items-start justify-between mb-6 pt-2">
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-2xl ${currentStepData.color} flex items-center justify-center shadow-inner`}>
+                {currentStepData.icon}
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-neutral-pink-500 block">צעד {guideStep + 1} מתוך {steps.length}</span>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {currentStepData.title}
+                </h3>
+              </div>
+            </div>
+            <button 
+              onClick={() => {
+                setShowGuideModal(false);
+              }}
+              className="w-8 h-8 rounded-full hover:bg-neutral-pink-50 flex items-center justify-center text-gray-400 transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="space-y-4 mb-8">
+            <p className="text-sm font-bold text-gray-700 leading-relaxed bg-neutral-pink-50/40 p-3.5 rounded-2xl border border-neutral-pink-100/40">
+              {currentStepData.description}
+            </p>
+
+            <ul className="space-y-3">
+              {currentStepData.bullets.map((bullet, idx) => (
+                <li key={idx} className="flex items-start gap-2.5 text-xs text-gray-600 leading-relaxed">
+                  <div className="w-5 h-5 rounded-full bg-neutral-pink-100 text-neutral-pink-600 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                    {idx + 1}
+                  </div>
+                  <span>{bullet}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-neutral-pink-100 pt-5">
+            <button
+              onClick={() => {
+                setShowGuideModal(false);
+                try {
+                  localStorage.setItem("masenat_guide_dismissed", "true");
+                } catch (e) {}
+                triggerToast("המדריך הוסתר. תוכלו לפתוח אותו שוב בכל עת בלחיצה על 'מדריך הפעלה' בראש המסך.", "info");
+              }}
+              className="text-xs font-semibold text-gray-400 hover:text-gray-600 px-3 py-2 rounded-full hover:bg-gray-50 transition"
+            >
+              אל תציג שוב
+            </button>
+
+            <div className="flex gap-2">
+              {guideStep > 0 && (
+                <button
+                  onClick={() => setGuideStep(prev => prev - 1)}
+                  className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-gray-800 rounded-full hover:bg-gray-100 transition"
+                >
+                  הקודם
+                </button>
+              )}
+              {guideStep < steps.length - 1 ? (
+                <button
+                  onClick={() => setGuideStep(prev => prev + 1)}
+                  className="bg-neutral-pink-500 hover:bg-neutral-pink-600 text-white font-bold text-xs px-6 py-2.5 rounded-full shadow-sm transition"
+                >
+                  הבא
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setShowGuideModal(false);
+                    try {
+                      localStorage.setItem("masenat_guide_dismissed", "true");
+                    } catch (e) {}
+                    triggerToast("שתהיה עבודה פוריה וגיוס מוצלח! 🎉", "success");
+                  }}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-6 py-2.5 rounded-full shadow-sm transition"
+                >
+                  הבנתי, סיימנו! 🚀
+                </button>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
   };
 
   const renderSummaryModal = () => {
@@ -2007,6 +2755,244 @@ export default function App() {
               סגור חלון
             </button>
           </div>
+        </motion.div>
+      </div>
+    );
+  };
+
+  const renderTaskModal = () => {
+    if (!taskModalOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-end sm:items-center justify-center p-2 sm:p-4 animate-in fade-in duration-300 text-right overflow-y-auto" dir="rtl">
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 50 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 50 }}
+          className="bg-white w-full max-w-lg rounded-t-[2rem] sm:rounded-3xl max-h-[92vh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-neutral-pink-200/80 mb-0 sm:mb-auto"
+        >
+          <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-neutral-pink-50/30">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-neutral-pink-100 flex items-center justify-center text-neutral-pink-600 shrink-0">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <h3 className="text-sm sm:text-base font-black text-gray-900">
+                {taskModalEditingLogId ? "עריכת משימה" : "הוספת משימה חדשה ליומן"}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setTaskModalOpen(false)}
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSaveTask} className="flex-grow overflow-auto p-4 sm:p-6 space-y-4 sm:space-y-5 custom-scrollbar">
+            {/* Job selection (added selector as requested) */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 block">משרה קשורה למשימה *</label>
+              <select
+                disabled={taskModalEditingLogId !== null}
+                value={taskModalJobId}
+                onChange={(e) => {
+                  const newJobId = e.target.value;
+                  setTaskModalJobId(newJobId);
+                  const filteredCands = candidates.filter(c => c.jobId === newJobId);
+                  if (filteredCands.length > 0) {
+                    setTaskModalCandidateId(filteredCands[0].id);
+                  } else {
+                    setTaskModalCandidateId("");
+                  }
+                }}
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 text-xs font-medium focus:ring-2 focus:ring-neutral-pink-300 focus:border-neutral-pink-500 transition outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                required
+              >
+                <option value="" disabled>בחר משרה...</option>
+                {jobs.map((j) => {
+                  const biz = businesses.find(b => b.id === j.businessId);
+                  const label = biz ? `${j.title} (${biz.name})` : j.title;
+                  return (
+                    <option key={j.id} value={j.id}>
+                      {label}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            {/* Candidate selection */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 block">מועמד קשור *</label>
+              <select
+                disabled={taskModalEditingLogId !== null}
+                value={taskModalCandidateId}
+                onChange={(e) => setTaskModalCandidateId(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 text-xs font-medium focus:ring-2 focus:ring-neutral-pink-300 focus:border-neutral-pink-500 transition outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                required
+              >
+                <option value="" disabled>בחר מועמד...</option>
+                {candidates
+                  .filter((cand) => !taskModalJobId || cand.jobId === taskModalJobId)
+                  .map((cand) => {
+                    const job = jobs.find((j) => j.id === cand.jobId);
+                    return (
+                      <option key={cand.id} value={cand.id}>
+                        {cand.name} ({job?.title || "משרה לא ידועה"})
+                      </option>
+                    );
+                  })}
+              </select>
+              {candidates.filter((cand) => !taskModalJobId || cand.jobId === taskModalJobId).length === 0 && (
+                <p className="text-[10px] text-rose-500 italic mt-1">אין מועמדים רשומים למשרה זו במערכת.</p>
+              )}
+            </div>
+
+            {/* Task Action / Title */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 block">סוג המשימה / הפעולה *</label>
+              <input
+                type="text"
+                placeholder="הזינו שם לפעולה (למשל: ראיון טלפוני)"
+                value={taskModalAction}
+                onChange={(e) => setTaskModalAction(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 text-xs font-medium focus:ring-2 focus:ring-neutral-pink-300 focus:border-neutral-pink-500 transition outline-none"
+                required
+              />
+              {/* Presets */}
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {["ראיון טלפוני 📞", "ראיון זום 💻", "ראיון פרונטלי 🤝", "משימת בית 🏠", "שיחת הצעת שכר 📄"].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setTaskModalAction(preset.replace(/[\u1F600-\u1F64F]|[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, "").trim())}
+                    className="text-[10px] bg-gray-100 hover:bg-neutral-pink-100 hover:text-neutral-pink-700 text-gray-600 px-2.5 py-1 rounded-full transition font-bold cursor-pointer"
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Date and Time */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 block">תאריך ושעה *</label>
+              <input
+                type="datetime-local"
+                value={taskModalReminderDate}
+                onChange={(e) => setTaskModalReminderDate(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 text-xs font-medium focus:ring-2 focus:ring-neutral-pink-300 focus:border-neutral-pink-500 transition outline-none"
+                required
+              />
+            </div>
+
+            {/* Task notes */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 block">הערות ותוכן המשימה</label>
+              <textarea
+                rows={3}
+                placeholder="הערות או פרטים נוספים (למשל: לעבור על הניסיון ב-React, לשלוח זימון ליומן...)"
+                value={taskModalNote}
+                onChange={(e) => setTaskModalNote(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 text-xs font-medium focus:ring-2 focus:ring-neutral-pink-300 focus:border-neutral-pink-500 transition outline-none resize-none"
+              />
+            </div>
+
+            {/* Is Completed (only when editing) */}
+            {taskModalEditingLogId && (
+              <div className="flex items-center gap-2 p-3 bg-gray-50/50 border border-gray-100 rounded-2xl">
+                <input
+                  type="checkbox"
+                  id="task-completed-chk"
+                  checked={taskModalIsCompleted}
+                  onChange={(e) => setTaskModalIsCompleted(e.target.checked)}
+                  className="w-4 h-4 text-neutral-pink-500 focus:ring-neutral-pink-300 border-gray-300 rounded cursor-pointer"
+                />
+                <label htmlFor="task-completed-chk" className="text-xs font-bold text-gray-700 cursor-pointer select-none">
+                  סמן משימה זו כהושלמה ✔️
+                </label>
+              </div>
+            )}
+
+            {/* Strengths & Weaknesses if applicable */}
+            {(taskModalAction.includes("ראיון") || taskModalAction.includes("משימ")) && (
+              <div className="space-y-3 p-4 bg-neutral-pink-50/20 border border-neutral-pink-100 rounded-2xl">
+                <h4 className="text-[11px] font-bold text-neutral-pink-800 uppercase tracking-wider mb-2">סיכום משוב (אופציונלי):</h4>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-600 block">נקודות חוזקה שעלו:</label>
+                  <input
+                    type="text"
+                    placeholder="למשל: הבנה ארכיטקטונית עמוקה, תקשורתי"
+                    value={taskModalStrengths}
+                    onChange={(e) => setTaskModalStrengths(e.target.value)}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-neutral-pink-300 transition outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-600 block">נקודות לשיפור/חולשה:</label>
+                  <input
+                    type="text"
+                    placeholder="למשל: פחות ניסיון בניהול צוותים גדולים"
+                    value={taskModalWeaknesses}
+                    onChange={(e) => setTaskModalWeaknesses(e.target.value)}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-neutral-pink-300 transition outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-4 border-t border-gray-100 gap-3">
+              {taskModalEditingLogId ? (
+                <div className="flex gap-2 justify-center sm:justify-start w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cand = candidates.find((c) => c.id === taskModalCandidateId);
+                      if (cand) {
+                        setSelectedCandidate(cand);
+                        setCurrentTab("candidates-status");
+                        setTaskModalOpen(false);
+                        triggerToast(`מעבר לתיק של ${cand.name}`, "info");
+                      }
+                    }}
+                    className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-neutral-pink-200 text-neutral-pink-600 rounded-full text-xs font-bold hover:bg-neutral-pink-50 transition shadow-sm flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>תיק מועמד</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteTask(taskModalEditingLogId)}
+                    className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 sm:py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-full text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>מחק</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="hidden sm:block" />
+              )}
+
+              <div className="flex gap-2 justify-end w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setTaskModalOpen(false)}
+                  className="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-2.5 bg-white border border-gray-200 text-gray-500 rounded-full text-xs font-bold hover:bg-gray-50 transition shadow-sm cursor-pointer text-center"
+                >
+                  ביטול
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 sm:flex-initial px-5 sm:px-6 py-2 sm:py-2.5 bg-neutral-pink-500 hover:bg-neutral-pink-600 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer text-center"
+                >
+                  שמור משימה ✨
+                </button>
+              </div>
+            </div>
+          </form>
         </motion.div>
       </div>
     );
@@ -2292,10 +3278,14 @@ export default function App() {
   };
 
   // Filter departments by active business
-  const filteredDepts = departments.filter(d => d.businessId === activeBusinessId);
+  const filteredDepts = activeBusinessId === "all-businesses" 
+    ? departments 
+    : departments.filter(d => d.businessId === activeBusinessId);
 
   // Filter jobs by active business
-  const filteredJobs = jobs.filter(j => j.businessId === activeBusinessId);
+  const filteredJobs = activeBusinessId === "all-businesses" 
+    ? jobs 
+    : jobs.filter(j => j.businessId === activeBusinessId);
 
   // Count candidates for job card badge
   const getCandidateCountForJob = (jobId: string) => {
@@ -2312,7 +3302,7 @@ export default function App() {
 
     // Get the job of this candidate to verify business
     const job = jobs.find(j => j.id === cand.jobId);
-    const matchesBusiness = !job || job.businessId === activeBusinessId;
+    const matchesBusiness = activeBusinessId === "all-businesses" || !job || job.businessId === activeBusinessId;
 
     // Job filter
     const matchesJob = filterJobId === "all" || cand.jobId === filterJobId;
@@ -2321,13 +3311,28 @@ export default function App() {
     const matchesSuitability = filterSuitability === "all" || cand.suitabilityCategory === filterSuitability;
 
     // Status filter
-    const matchesStatus = filterStatus === "all" || cand.status === filterStatus;
+    const matchesStatus = 
+      filterStatus === "all" || 
+      (filterStatus === "waiting_for_treatment" 
+        ? (cand.status === "new" || cand.status === "interview_pending") 
+        : cand.status === filterStatus);
 
     // Skill specific filter
     const matchesSkillSearch = !skillSearch || cand.skills.some(s => s.toLowerCase().includes(skillSearch.toLowerCase()));
 
     return matchesSearch && matchesBusiness && matchesJob && matchesSuitability && matchesStatus && matchesSkillSearch;
   });
+
+  const baseBusinessCandidates = candidates.filter(cand => {
+    const job = jobs.find(j => j.id === cand.jobId);
+    const matchesBusiness = activeBusinessId === "all-businesses" || !job || job.businessId === activeBusinessId;
+    const matchesJob = filterJobId === "all" || cand.jobId === filterJobId;
+    return matchesBusiness && matchesJob;
+  });
+
+  const kpiNewCount = baseBusinessCandidates.filter(c => c.status === "new").length;
+  const kpiInterviewPendingCount = baseBusinessCandidates.filter(c => c.status === "interview_pending").length;
+  const kpiTotalWaitingCount = kpiNewCount + kpiInterviewPendingCount;
 
   const handleExportCSV = () => {
     if (filteredCandidates.length === 0) {
@@ -2388,60 +3393,112 @@ export default function App() {
 
       {/* Elegant Rose Header */}
       <header className="border-b border-neutral-pink-200/80 bg-white/70 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 lg:gap-4">
             
-            {/* Logo & Info */}
-            <div className="flex items-center gap-3 text-right">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-neutral-pink-400 to-rose-300 flex items-center justify-center text-white shadow-sm shadow-neutral-pink-200">
-                <Sparkles className="w-5 h-5 animate-pulse" />
+            <div className="flex items-center justify-between gap-3 text-right">
+              {/* Logo & Info */}
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-neutral-pink-400 to-rose-300 flex items-center justify-center text-white shadow-sm shadow-neutral-pink-200">
+                  <Sparkles className="w-4.5 h-4.5 animate-pulse" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold tracking-tight text-gray-900 flex items-center gap-1.5">
+                    <span>מסננת</span>
+                    <span className="text-[9px] bg-neutral-pink-200 text-neutral-pink-800 px-2 py-0.5 rounded-full font-normal">
+                      סינון קורות חיים & DNA
+                    </span>
+                  </h1>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
-                  <span>מסננת</span>
-                  <span className="text-[10px] bg-neutral-pink-200 text-neutral-pink-800 px-2 py-0.5 rounded-full font-normal">
-                    סינון קורות חיים & DNA
-                  </span>
-                </h1>
+
+              {/* User Guide Trigger Button */}
+              <button
+                onClick={() => {
+                  setGuideStep(0);
+                  setShowGuideModal(true);
+                  triggerToast("פותח מדריך שימוש במערכת", "info");
+                }}
+                className="flex items-center gap-1.5 text-[10px] font-bold text-neutral-pink-600 hover:text-neutral-pink-700 bg-neutral-pink-50 hover:bg-neutral-pink-100/60 px-2.5 py-1.5 rounded-full border border-neutral-pink-200/60 transition shrink-0 cursor-pointer"
+                title="מדריך תפעול שלב-אחר-שלב"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">מדריך הפעלה</span>
+                <span className="sm:hidden">מדריך</span>
+              </button>
+
+              {/* Compact Active Business Selector on mobile */}
+              <div className="lg:hidden flex items-center gap-1 bg-white border border-neutral-pink-200 px-2 py-1 rounded-full shadow-sm max-w-[150px]">
+                <Building className="w-3.5 h-3.5 text-neutral-pink-500 flex-shrink-0" />
+                <select 
+                  value={activeBusinessId} 
+                  onChange={(e) => {
+                    setActiveBusinessId(e.target.value);
+                    setSelectedJob(null);
+                    setFilterJobId("all");
+                    setSelectedDeptId("");
+                    triggerToast(`ניהול רב-עסקי מרוכז הופעל`, "info");
+                  }}
+                  className="bg-transparent border-none text-[10px] font-bold text-gray-800 focus:outline-none focus:ring-0 pl-3 pr-1 cursor-pointer truncate"
+                >
+                  <option value="all-businesses">🌍 כל העסקים במקביל</option>
+                  {businesses.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            {/* Subtle Navigation Switcher */}
-            <div className="flex items-center bg-gray-100/50 p-1 rounded-xl border border-gray-200 shadow-inner overflow-hidden">
+            {/* Subtle Navigation Switcher - Scrollable horizontally on mobile */}
+            <div className="flex items-center bg-gray-100/60 p-1 rounded-xl border border-gray-200 shadow-inner overflow-x-auto scrollbar-none flex-nowrap w-full lg:w-auto gap-0.5">
               <button 
                 onClick={() => setCurrentTab("business-setup")}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 ${currentTab === "business-setup" ? "bg-white text-neutral-pink-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${currentTab === "business-setup" ? "bg-white text-neutral-pink-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
               >
                 <Building className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">ניהול עסקים</span>
+                <span>ניהול עסקים</span>
               </button>
               <button 
                 onClick={() => setCurrentTab("new-job")}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 ${currentTab === "new-job" ? "bg-white text-neutral-pink-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${currentTab === "new-job" ? "bg-white text-neutral-pink-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">הקמת משרה</span>
+                <span>הקמת משרה</span>
               </button>
               <button 
                 onClick={() => setCurrentTab("existing-jobs")}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 ${currentTab === "existing-jobs" ? "bg-white text-neutral-pink-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${currentTab === "existing-jobs" ? "bg-white text-neutral-pink-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
               >
                 <Briefcase className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">ניהול משרות</span>
+                <span>ניהול משרות</span>
               </button>
               <button 
                 onClick={() => setCurrentTab("candidates-status")}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 ${currentTab === "candidates-status" ? "bg-white text-neutral-pink-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${currentTab === "candidates-status" ? "bg-white text-neutral-pink-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
               >
                 <Users className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">מועמדים</span>
+                <span>מועמדים</span>
+              </button>
+              <button 
+                onClick={() => setCurrentTab("compare-candidates")}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${currentTab === "compare-candidates" ? "bg-white text-neutral-pink-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>השוואה ({compareCandidateIds.length})</span>
+              </button>
+              <button 
+                onClick={() => setCurrentTab("recruitment-calendar")}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${currentTab === "recruitment-calendar" ? "bg-white text-neutral-pink-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>לוח משימות</span>
               </button>
             </div>
 
-            {/* Quick Business Selector */}
-            <div className="flex items-center gap-2 bg-white/90 border border-neutral-pink-200 px-3.5 py-1.5 rounded-full shadow-sm">
+            {/* Quick Business Selector (Desktop only) */}
+            <div className="hidden lg:flex items-center gap-2 bg-white/90 border border-neutral-pink-200 px-3.5 py-1.5 rounded-full shadow-sm">
               <Building className="w-4 h-4 text-neutral-pink-500" />
-              <span className="text-[10px] text-gray-400 font-semibold ml-1 hidden xs:inline">עסק פעיל:</span>
+              <span className="text-[10px] text-gray-400 font-semibold ml-1">עסק פעיל:</span>
               <select 
                 value={activeBusinessId} 
                 onChange={(e) => {
@@ -2449,10 +3506,11 @@ export default function App() {
                   setSelectedJob(null);
                   setFilterJobId("all");
                   setSelectedDeptId("");
-                  triggerToast(`העסק הפעיל הוחלף בהצלחה`, "info");
+                  triggerToast(`ניהול רב-עסקי מרוכז הופעל`, "info");
                 }}
                 className="bg-transparent border-none text-xs font-bold text-gray-800 focus:outline-none focus:ring-0 pl-4 pr-1 cursor-pointer"
               >
+                <option value="all-businesses">🌍 כל העסקים במקביל</option>
                 {businesses.map(b => (
                   <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
@@ -2465,6 +3523,109 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-8 sm:px-6 lg:px-8">
+
+        {/* Interactive operation guide */}
+        <AnimatePresence>
+          {showUserGuide && (
+            <motion.div 
+              initial={{ opacity: 0, y: -15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              className="mb-8 bg-gradient-to-br from-neutral-pink-50/90 to-rose-50/50 p-5 rounded-3xl border border-neutral-pink-200/80 shadow-sm relative overflow-hidden text-right"
+            >
+              {/* Decorative sparkles */}
+              <div className="absolute top-0 left-0 p-8 opacity-10 pointer-events-none">
+                <Sparkles className="w-32 h-32 text-neutral-pink-400" />
+              </div>
+              
+              <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="space-y-1.5 max-w-3xl">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1 rounded-lg bg-neutral-pink-200 text-neutral-pink-800">
+                      <HelpCircle className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-900">מדריך מהיר: כיצד להפיק את המרב ממערכת "מסננת"?</h3>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    מערכת "מסננת" עוזרת לכם לסנן קורות חיים לא רק על סמך מילים יבשות, אלא על פי ה-DNA התרבותי, המקצועי והצוותי הייחודי של החברה שלכם. עקבו אחר השלבים או דפדפו בלשוניות לקבלת הסבר מפורט.
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-2 self-end md:self-center">
+                  <button
+                    onClick={() => {
+                      setGuideStep(0);
+                      setShowGuideModal(true);
+                      triggerToast("פותח מדריך שימוש במערכת", "info");
+                    }}
+                    className="bg-neutral-pink-500 hover:bg-neutral-pink-600 text-white text-[10px] font-bold px-4 py-2 rounded-full transition shadow-sm whitespace-nowrap cursor-pointer"
+                  >
+                    למדריך שלב-אחר-שלב 🚀
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowUserGuide(false);
+                      try {
+                        localStorage.setItem("masenat_guide_dismissed", "true");
+                      } catch (e) {}
+                      triggerToast("המדריך הוסתר. תוכלו לפתוח אותו שוב בכל עת בלחיצה על 'מדריך הפעלה' בראש המסך.", "info");
+                    }}
+                    className="text-gray-400 hover:text-gray-600 text-[10px] font-bold hover:bg-white/80 border border-gray-200/80 px-3 py-2 rounded-full transition whitespace-nowrap cursor-pointer"
+                  >
+                    דלג / אל תציג שוב
+                  </button>
+                </div>
+              </div>
+
+              {/* 4 Interactive Columns describing the workflow */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-5 pt-4 border-t border-neutral-pink-200/50">
+                <div className="bg-white/60 p-3.5 rounded-2xl border border-neutral-pink-100/60">
+                  <span className="text-[10px] font-bold text-neutral-pink-500 block mb-1">שלב 1 • ה-DNA הארגוני</span>
+                  <h4 className="text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
+                    <Building className="w-3.5 h-3.5 text-neutral-pink-500" />
+                    אפיון החברה והצוות
+                  </h4>
+                  <p className="text-[11px] text-gray-500 leading-relaxed">
+                    הקימו עסק, ענו על מספר שאלות קצרות, וה-AI יזקק את פרופיל ה-DNA התרבותי שלכם.
+                  </p>
+                </div>
+
+                <div className="bg-white/60 p-3.5 rounded-2xl border border-neutral-pink-100/60">
+                  <span className="text-[10px] font-bold text-neutral-pink-500 block mb-1">שלב 2 • הוספת משרה</span>
+                  <h4 className="text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
+                    <Plus className="w-3.5 h-3.5 text-neutral-pink-500" />
+                    דרישות ותחומי עניין
+                  </h4>
+                  <p className="text-[11px] text-gray-500 leading-relaxed">
+                    הגדירו כותרת ודרישות תפקיד, או הדביקו תיאור קיים (JD) והמערכת תפרק אותו אוטומטית לקריטריונים.
+                  </p>
+                </div>
+
+                <div className="bg-white/60 p-3.5 rounded-2xl border border-neutral-pink-100/60">
+                  <span className="text-[10px] font-bold text-neutral-pink-500 block mb-1">שלב 3 • סינון קורות חיים</span>
+                  <h4 className="text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
+                    <UploadCloud className="w-3.5 h-3.5 text-neutral-pink-500" />
+                    העלאה וניתוח AI
+                  </h4>
+                  <p className="text-[11px] text-gray-500 leading-relaxed">
+                    גררו קבצי קורות חיים. המערכת תבצע השוואה ל-DNA ותקבע ציון התאמה משוקלל עם הסברים מנומקים.
+                  </p>
+                </div>
+
+                <div className="bg-white/60 p-3.5 rounded-2xl border border-neutral-pink-100/60">
+                  <span className="text-[10px] font-bold text-neutral-pink-500 block mb-1">שלב 4 • קבלת החלטות</span>
+                  <h4 className="text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
+                    <LayoutGrid className="w-3.5 h-3.5 text-neutral-pink-500" />
+                    השוואה ולוח משימות
+                  </h4>
+                  <p className="text-[11px] text-gray-500 leading-relaxed">
+                    השוו קבוצת מועמדים בטבלה רב-ממדית, ונהלו (הוסיפו ועירכו) משימות וראיונות ישירות מלוח המשימות המובנה.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Tab 1: Business Setup & AI DNA Interview (הקמת עסק ושאלון DNA) */}
         {currentTab === "business-setup" && (
@@ -2637,6 +3798,121 @@ export default function App() {
                   // Business Detail Form or Details view
                   <div className="space-y-6">
                     
+                    {/* If we are in "All Businesses" mode, render a master dashboard */}
+                    {activeBusinessId === "all-businesses" && (
+                      <div className="space-y-6 animate-fadeIn">
+                        {/* Upper Section with stats */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="bg-white p-4 rounded-2xl border border-neutral-pink-100 shadow-sm flex flex-col justify-between">
+                            <span className="text-[10px] font-bold text-gray-400">עסקים רשומים</span>
+                            <div className="flex items-baseline gap-2 mt-2">
+                              <span className="text-2xl font-black text-neutral-pink-600">{businesses.length}</span>
+                              <Building className="w-4 h-4 text-neutral-pink-300" />
+                            </div>
+                          </div>
+                          <div className="bg-white p-4 rounded-2xl border border-neutral-pink-100 shadow-sm flex flex-col justify-between">
+                            <span className="text-[10px] font-bold text-gray-400">משרות פתוחות</span>
+                            <div className="flex items-baseline gap-2 mt-2">
+                              <span className="text-2xl font-black text-neutral-pink-600">{jobs.length}</span>
+                              <Briefcase className="w-4 h-4 text-neutral-pink-300" />
+                            </div>
+                          </div>
+                          <div className="bg-white p-4 rounded-2xl border border-neutral-pink-100 shadow-sm flex flex-col justify-between">
+                            <span className="text-[10px] font-bold text-gray-400">מועמדים שנסרקו</span>
+                            <div className="flex items-baseline gap-2 mt-2">
+                              <span className="text-2xl font-black text-neutral-pink-600">{candidates.length}</span>
+                              <Users className="w-4 h-4 text-neutral-pink-300" />
+                            </div>
+                          </div>
+                          <div className="bg-white p-4 rounded-2xl border border-neutral-pink-100 shadow-sm flex flex-col justify-between">
+                            <span className="text-[10px] font-bold text-gray-400">גויסו בהצלחה 🎉</span>
+                            <div className="flex items-baseline gap-2 mt-2">
+                              <span className="text-2xl font-black text-emerald-600">{candidates.filter(c => c.status === "hired").length}</span>
+                              <Sparkles className="w-4 h-4 text-emerald-300" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Middle Section: Active jobs by business */}
+                        <div className="bg-neutral-pink-50/20 p-5 rounded-2xl border border-neutral-pink-200/50 space-y-4 text-right">
+                          <h4 className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                            <Briefcase className="w-4 h-4 text-neutral-pink-500" />
+                            משרות פעילות בכלל הארגונים:
+                          </h4>
+                          
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-xs text-right border-collapse">
+                              <thead>
+                                <tr className="border-b border-neutral-pink-100 text-gray-400 font-bold">
+                                  <th className="py-2 px-3">שם המשרה</th>
+                                  <th className="py-2 px-3">שיוך לעסק</th>
+                                  <th className="py-2 px-3">מחלקה וצוות</th>
+                                  <th className="py-2 px-3 text-center">מועמדים</th>
+                                  <th className="py-2 px-3 text-left">פעולות</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {jobs.map(j => {
+                                  const biz = businesses.find(b => b.id === j.businessId);
+                                  const candCount = getCandidateCountForJob(j.id);
+                                  return (
+                                    <tr key={j.id} className="border-b border-neutral-pink-50 hover:bg-neutral-pink-50/30 transition">
+                                      <td className="py-2.5 px-3 font-bold text-gray-800">{j.title}</td>
+                                      <td className="py-2.5 px-3">
+                                        <span className="px-2 py-0.5 rounded-full bg-neutral-pink-100 text-neutral-pink-800 font-bold text-[10px]">
+                                          {biz?.name || "עסק שנמחק"}
+                                        </span>
+                                      </td>
+                                      <td className="py-2.5 px-3 text-gray-500">
+                                        {j.departmentName || "כללי"} {j.teamName ? `(${j.teamName})` : ""}
+                                      </td>
+                                      <td className="py-2.5 px-3 text-center font-bold text-neutral-pink-600">{candCount}</td>
+                                      <td className="py-2.5 px-3 text-left">
+                                        <div className="flex items-center gap-2 justify-end">
+                                          <button
+                                            onClick={() => {
+                                              setSelectedJob(j);
+                                              setFilterJobId(j.id);
+                                              setCurrentTab("candidates-status");
+                                              triggerToast(`מסונן לפי ${j.title}`, "info");
+                                            }}
+                                            className="text-[10px] font-bold text-neutral-pink-600 hover:text-white hover:bg-neutral-pink-500 border border-neutral-pink-200 px-2 py-1 rounded-full transition cursor-pointer"
+                                          >
+                                            צפה במועמדים
+                                          </button>
+                                          {biz && (
+                                            <button
+                                              onClick={() => {
+                                                setActiveBusinessId(biz.id);
+                                                triggerToast(`העסק ${biz.name} הופעל כעת`, "success");
+                                              }}
+                                              className="text-[10px] font-bold text-gray-500 hover:text-white hover:bg-gray-500 border border-gray-200 px-2 py-1 rounded-full transition cursor-pointer"
+                                            >
+                                              נהל עסק
+                                            </button>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                                {jobs.length === 0 && (
+                                  <tr>
+                                    <td colSpan={5} className="py-6 text-center text-gray-400 italic">אין משרות פעילות במערכת כעת. עברו ללשונית "פרסום משרה" כדי להתחיל.</td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Prompt explanation */}
+                        <div className="text-[11px] text-gray-500 leading-relaxed bg-neutral-pink-100/50 p-3 rounded-xl border border-neutral-pink-200/30">
+                          <strong>מצב ניהול רב-עסקי מופעל 🌍</strong> במצב זה ניתן לראות ולנהל את כלל העסקים, המחלקות, המשרות והמועמדים במרוכז. כדי להתמקד בעסק ספציפי, באפשרותכם לבחור אותו מתוך רשימת העסקים בצד ימין או דרך בורר העסקים בראש המסך.
+                        </div>
+                      </div>
+                    )}
+
                     {/* If there is an active business, we display its current DNA info or offer to create a new one */}
                     {activeBusiness && (
                       <div className="bg-neutral-pink-100/20 p-5 rounded-2xl border border-neutral-pink-200/50 space-y-4">
@@ -2928,7 +4204,9 @@ export default function App() {
                     {editingJob ? `עריכת משרה: ${editingJob.title}` : "פרסום משרה חדשה"}
                   </h2>
                   <p className="text-xs text-gray-500 mt-1">
-                    {activeBusinessId ? (
+                    {activeBusinessId === "all-businesses" ? (
+                      <span className="text-neutral-pink-600 font-bold italic">נא לבחור עסק לשיוך המשרה מתוך הרשימה בטופס</span>
+                    ) : activeBusinessId ? (
                       <>משויך לעסק: <span className="font-bold text-neutral-pink-600">{activeBusiness?.name}</span></>
                     ) : (
                       <span className="text-neutral-pink-600 font-bold italic">הקמת משרה ללא שיוך מוקדם לעסק (יוגדר בהמשך)</span>
@@ -2997,6 +4275,30 @@ export default function App() {
                   {renderRankedRequirementsEditor()}
                 </div>
 
+                {activeBusinessId === "all-businesses" && (
+                  <div className="bg-neutral-pink-50/30 p-4 rounded-2xl border border-neutral-pink-200/50 mb-6 space-y-2">
+                    <label className="block text-xs font-bold text-gray-800 flex items-center gap-1">
+                      <Building className="w-4 h-4 text-neutral-pink-500" />
+                      <span>שיוך לעסק ספציפי *</span>
+                    </label>
+                    <select
+                      value={selectedBusinessIdForNewJob}
+                      onChange={(e) => {
+                        setSelectedBusinessIdForNewJob(e.target.value);
+                        setSelectedDeptId("");
+                        setSelectedTeamId("");
+                      }}
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl border border-neutral-pink-200 bg-white focus:outline-none focus:border-neutral-pink-400 text-xs transition font-semibold"
+                    >
+                      <option value="">-- בחרו את העסק שעבורו מיועדת המשרה --</option>
+                      {businesses.map(b => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   
                   <div className="md:col-span-1.5">
@@ -3022,7 +4324,10 @@ export default function App() {
                       className="w-full px-4 py-2.5 rounded-xl border border-neutral-pink-200 bg-neutral-pink-50/20 focus:outline-none focus:border-neutral-pink-400 text-xs transition"
                     >
                       <option value="">-- בחר מחלקה (אופציונלי כעת) --</option>
-                      {filteredDepts.map(d => (
+                      {(activeBusinessId === "all-businesses"
+                        ? departments.filter(d => d.businessId === selectedBusinessIdForNewJob)
+                        : filteredDepts
+                      ).map(d => (
                         <option key={d.id} value={d.id}>{d.name}</option>
                       ))}
                     </select>
@@ -3519,6 +4824,99 @@ export default function App() {
         {currentTab === "candidates-status" && (
           <div className="space-y-6 animate-fadeIn">
             
+            {/* Status Cards (כרטיסי סטטוס לתעדוף עבודה) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Card 1: New Candidates */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setFilterStatus(filterStatus === "new" ? "all" : "new")}
+                className={`p-5 rounded-3xl border transition-all duration-300 cursor-pointer shadow-sm relative overflow-hidden flex items-center justify-between ${
+                  filterStatus === "new"
+                    ? "bg-rose-500 text-white border-rose-600 ring-2 ring-rose-300 shadow-rose-100"
+                    : "bg-white hover:bg-rose-50/20 border-rose-100 hover:border-rose-200"
+                }`}
+              >
+                <div className="space-y-1 text-right" dir="rtl">
+                  <span className={`text-[10px] font-bold tracking-wider ${filterStatus === "new" ? "text-rose-100" : "text-rose-600"}`}>
+                    חדשים במערכת ✨
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black">{kpiNewCount}</span>
+                    <span className={`text-[10px] ${filterStatus === "new" ? "text-rose-100" : "text-gray-400"}`}>מועמדים</span>
+                  </div>
+                  <p className={`text-[10px] ${filterStatus === "new" ? "text-white/90" : "text-gray-500"}`}>
+                    {filterStatus === "new" ? "מציג חדשים בלבד (לחצו לביטול)" : "לחצו לסינון מועמדים חדשים"}
+                  </p>
+                </div>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                  filterStatus === "new" ? "bg-white/20 text-white" : "bg-rose-50 text-rose-500"
+                }`}>
+                  <Sparkles className="w-6 h-6" />
+                </div>
+              </motion.div>
+
+              {/* Card 2: Interview Pending */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setFilterStatus(filterStatus === "interview_pending" ? "all" : "interview_pending")}
+                className={`p-5 rounded-3xl border transition-all duration-300 cursor-pointer shadow-sm relative overflow-hidden flex items-center justify-between ${
+                  filterStatus === "interview_pending"
+                    ? "bg-blue-500 text-white border-blue-600 ring-2 ring-blue-300 shadow-blue-100"
+                    : "bg-white hover:bg-blue-50/20 border-blue-100 hover:border-blue-200"
+                }`}
+              >
+                <div className="space-y-1 text-right" dir="rtl">
+                  <span className={`text-[10px] font-bold tracking-wider ${filterStatus === "interview_pending" ? "text-blue-100" : "text-blue-600"}`}>
+                    ממתינים לראיון 📞
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black">{kpiInterviewPendingCount}</span>
+                    <span className={`text-[10px] ${filterStatus === "interview_pending" ? "text-blue-100" : "text-gray-400"}`}>מועמדים</span>
+                  </div>
+                  <p className={`text-[10px] ${filterStatus === "interview_pending" ? "text-white/90" : "text-gray-500"}`}>
+                    {filterStatus === "interview_pending" ? "מציג ממתינים לראיון (לחצו לביטול)" : "לחצו לסינון מועמדים לראיון"}
+                  </p>
+                </div>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                  filterStatus === "interview_pending" ? "bg-white/20 text-white" : "bg-blue-50 text-blue-500"
+                }`}>
+                  <Clock className="w-6 h-6" />
+                </div>
+              </motion.div>
+
+              {/* Card 3: Total waiting for treatment */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setFilterStatus(filterStatus === "waiting_for_treatment" ? "all" : "waiting_for_treatment")}
+                className={`p-5 rounded-3xl border transition-all duration-300 cursor-pointer shadow-sm relative overflow-hidden flex items-center justify-between ${
+                  filterStatus === "waiting_for_treatment"
+                    ? "bg-amber-500 text-white border-amber-600 ring-2 ring-amber-300 shadow-amber-100"
+                    : "bg-amber-50/10 hover:bg-amber-50/30 border-amber-100/70 hover:border-amber-200"
+                }`}
+              >
+                <div className="space-y-1 text-right" dir="rtl">
+                  <span className={`text-[10px] font-bold tracking-wider ${filterStatus === "waiting_for_treatment" ? "text-amber-100" : "text-amber-700"}`}>
+                    סה״כ ממתינים לטיפול ⏳
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black">{kpiTotalWaitingCount}</span>
+                    <span className={`text-[10px] ${filterStatus === "waiting_for_treatment" ? "text-amber-100" : "text-amber-600"}`}>מועמדים</span>
+                  </div>
+                  <p className={`text-[10px] ${filterStatus === "waiting_for_treatment" ? "text-white/90" : "text-gray-500"}`}>
+                    {filterStatus === "waiting_for_treatment" ? "מציג את כל הממתינים (לחצו לביטול)" : "לחצו להצגת כל הממתינים לטיפול"}
+                  </p>
+                </div>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                  filterStatus === "waiting_for_treatment" ? "bg-white/20 text-white" : "bg-amber-100/50 text-amber-600"
+                }`}>
+                  <ClipboardList className="w-6 h-6" />
+                </div>
+              </motion.div>
+            </div>
+
             {/* Filter controls */}
             <div className="bg-white/95 p-5 rounded-3xl border border-neutral-pink-200/80 shadow-md">
               <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
@@ -3545,12 +4943,18 @@ export default function App() {
                     <select 
                       value={filterJobId} 
                       onChange={(e) => setFilterJobId(e.target.value)}
-                      className="bg-transparent border-none text-xs font-bold text-gray-800 focus:outline-none focus:ring-0 pl-3 pr-1"
+                      className="bg-transparent border-none text-xs font-bold text-gray-800 focus:outline-none focus:ring-0 pl-3 pr-1 max-w-[200px] truncate"
                     >
                       <option value="all">כל המשרות</option>
-                      {filteredJobs.map(j => (
-                        <option key={j.id} value={j.id}>{j.title}</option>
-                      ))}
+                      {filteredJobs.map(j => {
+                        const biz = businesses.find(b => b.id === j.businessId);
+                        const label = activeBusinessId === "all-businesses" && biz
+                          ? `${j.title} (${biz.name})`
+                          : j.title;
+                        return (
+                          <option key={j.id} value={j.id}>{label}</option>
+                        );
+                      })}
                     </select>
                   </div>
 
@@ -3594,6 +4998,7 @@ export default function App() {
                       className="bg-transparent border-none text-xs font-bold text-gray-800 focus:outline-none focus:ring-0 pl-3 pr-1"
                     >
                       <option value="all">כל הסטטוסים</option>
+                      <option value="waiting_for_treatment">ממתינים לטיפול (חדש / ראיון) ⏳</option>
                       {Object.keys(statusMap).map(st => (
                         <option key={st} value={st}>{statusMap[st as CandidateStatus].label}</option>
                       ))}
@@ -3615,6 +5020,111 @@ export default function App() {
               </div>
             </div>
 
+            {/* Auto Screening & Reject Rules Panel */}
+            <div className="bg-gradient-to-br from-neutral-pink-50/20 to-white p-5 rounded-3xl border border-neutral-pink-200/60 shadow-md space-y-4 text-right animate-fadeIn" dir="rtl">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-neutral-pink-200/30 pb-3 gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-neutral-pink-100 flex items-center justify-center text-neutral-pink-600 shrink-0">
+                    <Settings className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-gray-900">מנגנון סינון ודחייה אוטומטית חכמה ⚡</h4>
+                    <p className="text-[10px] text-gray-400">חוסך זמן יקר על ידי אוטומציה של סינון ראשוני של מועמדים לא מתאימים</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${autoRejectEnabled ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-gray-500"}`}>
+                    {autoRejectEnabled ? "● סינון אוטומטי פעיל" : "● סינון אוטומטי כבוי"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
+                
+                {/* Rule configuration parameters */}
+                <div className="md:col-span-8 flex flex-col justify-between gap-4">
+                  <div className="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-neutral-pink-100/60 shadow-sm">
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-bold text-gray-800 block">הפעל סינון אוטומטי למועמדים חדשים:</span>
+                      <p className="text-[10px] text-gray-400">כל קובץ קו"ח חדש שיוערך יסונן ישירות לסטטוס 'נדחה' אם הוא עונה לחוקים</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                      <input 
+                        type="checkbox" 
+                        checked={autoRejectEnabled} 
+                        onChange={(e) => saveAutoRejectSettings(e.target.checked, autoRejectMinScore, autoRejectUnsuitable)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neutral-pink-500"></div>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Minimum Score Threshold Input */}
+                    <div className="bg-white p-3.5 rounded-2xl border border-neutral-pink-100/60 shadow-sm space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-800">סף ציון התאמה מינימלי:</span>
+                        <span className="bg-neutral-pink-100 text-neutral-pink-800 px-2 py-0.5 rounded-lg text-[10px] font-bold">מתחת ל-{autoRejectMinScore}</span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="20" 
+                        max="80" 
+                        value={autoRejectMinScore} 
+                        onChange={(e) => saveAutoRejectSettings(autoRejectEnabled, parseInt(e.target.value, 10), autoRejectUnsuitable)}
+                        className="w-full accent-neutral-pink-500 cursor-pointer"
+                      />
+                      <div className="flex justify-between text-[9px] text-gray-400">
+                        <span>20 (סינון מקל)</span>
+                        <span>80 (סינון מחמיר)</span>
+                      </div>
+                    </div>
+
+                    {/* Suitability Category checkbox rule */}
+                    <div className="bg-white p-3.5 rounded-2xl border border-neutral-pink-100/60 shadow-sm flex flex-col justify-between space-y-2">
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-bold text-gray-800 block">סינון לפי קטגוריית התאמה:</span>
+                        <p className="text-[10px] text-gray-400">דחה מועמדים שרמת ההתאמה המערכתית שלהם היא "לא מתאים"</p>
+                      </div>
+                      <label className="flex items-center gap-2 cursor-pointer self-start">
+                        <input 
+                          type="checkbox" 
+                          checked={autoRejectUnsuitable} 
+                          onChange={(e) => saveAutoRejectSettings(autoRejectEnabled, autoRejectMinScore, e.target.checked)}
+                          className="rounded border-gray-300 text-neutral-pink-600 focus:ring-neutral-pink-500 h-4 w-4 cursor-pointer"
+                        />
+                        <span className="text-[11px] font-bold text-gray-700">דחה מועמדים "לא מתאימים" 🚫</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bulk execution dashboard */}
+                <div className="md:col-span-4 bg-neutral-pink-50/40 p-4 rounded-2xl border border-neutral-pink-200/40 space-y-3 flex flex-col justify-between">
+                  <div className="space-y-1.5 text-right">
+                    <span className="text-[10px] font-bold text-neutral-pink-700 block">הרצה יזומה על מועמדים קיימים 🔍</span>
+                    <p className="text-[11px] text-gray-600 leading-relaxed">
+                      באפשרותכם להריץ את כללי הסינון כעת על כל המועמדים הקיימים במערכת כדי לסנן אותם בלחיצת כפתור אחת.
+                    </p>
+                  </div>
+                  <div className="space-y-2 mt-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleRunAutoRejection(filterJobId)}
+                      className="w-full py-2 px-4 bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer text-center"
+                    >
+                      <UserX className="w-4 h-4 shrink-0" />
+                      <span>הפעל סינון על מועמדים קיימים ⚡</span>
+                    </button>
+                    <p className="text-[9px] text-gray-400 text-center">
+                      * מועמד שיסונן יועבר ל'נדחה' ויקבל תיעוד מפורט בלוג הפעילות שלו.
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
             {/* Candidate List Card layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
@@ -3629,19 +5139,25 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredCandidates.map((cand) => {
-                      const job = jobs.find(j => j.id === cand.jobId);
-                      const isSelected = selectedCandidate?.id === cand.id;
-                      return (
-                        <div 
-                          key={cand.id}
-                          onClick={() => setSelectedCandidate(cand)}
-                          className={`p-4 rounded-3xl border bg-white shadow-sm hover:shadow transition duration-300 cursor-pointer text-right flex flex-col justify-between ${
-                            isSelected 
-                              ? "border-neutral-pink-500 ring-2 ring-neutral-pink-200" 
-                              : "border-neutral-pink-100"
-                          }`}
-                        >
+                    <AnimatePresence mode="popLayout">
+                      {filteredCandidates.map((cand) => {
+                        const job = jobs.find(j => j.id === cand.jobId);
+                        const isSelected = selectedCandidate?.id === cand.id;
+                        return (
+                          <motion.div 
+                            key={cand.id}
+                            layout
+                            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                            transition={{ duration: 0.35, ease: "easeOut" }}
+                            onClick={() => setSelectedCandidate(cand)}
+                            className={`p-4 rounded-3xl border bg-white shadow-sm hover:shadow transition duration-300 cursor-pointer text-right flex flex-col justify-between ${
+                              isSelected 
+                                ? "border-neutral-pink-500 ring-2 ring-neutral-pink-200" 
+                                : "border-neutral-pink-100"
+                            }`}
+                          >
                           <div>
                             <div className="flex items-center justify-between gap-2 mb-2">
                               <div className="flex items-center gap-2">
@@ -3681,9 +5197,26 @@ export default function App() {
                                 </span>
                               )}
                             </h3>
-                            <p className="text-[11px] text-neutral-pink-700 font-semibold mb-2">
-                              עבור: {job?.title || "משרה שנמחקה"}
-                              {job?.teamName ? ` (${job.teamName})` : ""}
+                            {cand.recruiterRating && (
+                              <div className="flex items-center gap-0.5 mb-1.5 text-amber-500" dir="rtl">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star 
+                                    key={i} 
+                                    className={`w-3 h-3 ${i < cand.recruiterRating! ? "fill-amber-400 text-amber-400" : "text-gray-200"}`} 
+                                  />
+                                ))}
+                                <span className="text-[9px] text-amber-600 font-bold mr-1">(הערכת צוות פנימית)</span>
+                              </div>
+                            )}
+                            <p className="text-[11px] text-neutral-pink-700 font-semibold mb-2 flex items-center gap-1.5 flex-wrap">
+                              {activeBusinessId === "all-businesses" && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-neutral-pink-600 text-white flex items-center gap-0.5">
+                                  <Building className="w-2.5 h-2.5" />
+                                  {businesses.find(b => b.id === job?.businessId)?.name || "עסק כללי"}
+                                </span>
+                              )}
+                              <span>עבור: {job?.title || "משרה שנמחקה"}</span>
+                              {job?.teamName ? <span className="text-gray-400">({job.teamName})</span> : ""}
                             </p>
                             
                             <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed mb-3">
@@ -3754,11 +5287,12 @@ export default function App() {
                               </button>
                             </div>
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })}
-                  </div>
-                )}
+                  </AnimatePresence>
+                </div>
+              )}
 
               </div>
 
@@ -3869,6 +5403,70 @@ export default function App() {
                       <p className="text-gray-700 font-medium leading-relaxed">{selectedCandidate.recommendation}</p>
                     </div>
 
+                    {/* Recruiter Rating and Internal Notes (Confidential Team Evaluation) */}
+                    <div className="bg-amber-50/20 p-4 rounded-2xl border border-amber-200/50 text-xs space-y-3 text-right" dir="rtl">
+                      <div className="flex items-center gap-2 border-b border-amber-200/30 pb-2">
+                        <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                        <div>
+                          <span className="font-bold text-gray-900 block text-xs">הערכת מגייס פנימית (חסוי לצוות) 🔒</span>
+                          <span className="text-[9px] text-gray-500 block">אינו נגיש למועמד ואינו מבוסס על ניתוח AI</span>
+                        </div>
+                      </div>
+
+                      {/* Stars Rating */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-gray-700 block">דירוג כוכבים אישי:</span>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((starVal) => {
+                            const isFilled = localRecruiterRating !== undefined && starVal <= localRecruiterRating;
+                            return (
+                              <button
+                                key={starVal}
+                                type="button"
+                                onClick={() => setLocalRecruiterRating(starVal)}
+                                className="p-0.5 hover:scale-110 transition cursor-pointer"
+                                title={`דירוג ${starVal} כוכבים`}
+                              >
+                                <Star 
+                                  className={`w-5 h-5 ${isFilled ? "fill-amber-400 text-amber-400" : "text-gray-300 hover:text-amber-300"}`} 
+                                />
+                              </button>
+                            );
+                          })}
+                          {localRecruiterRating !== undefined && (
+                            <button
+                              type="button"
+                              onClick={() => setLocalRecruiterRating(undefined)}
+                              className="text-[9px] text-gray-400 hover:text-rose-500 mr-2 underline cursor-pointer"
+                            >
+                              איפוס
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Confidential Notes */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-gray-700 block">הערות פנימיות חסויות לצוות:</span>
+                        <textarea
+                          rows={3}
+                          placeholder="הוסיפו הערות פנימיות חסויות (למשל: דרישות שכר, התרשמות ראשונית, מוטיבציה, דגשים לבדיקת ממליצים...)"
+                          value={localInternalNotes}
+                          onChange={(e) => setLocalInternalNotes(e.target.value)}
+                          className="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs text-right focus:outline-none focus:ring-1 focus:ring-amber-300 focus:border-amber-400 transition resize-none leading-relaxed placeholder:text-[10px] placeholder:text-gray-400"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateRecruiterFeedback(selectedCandidate.id, localRecruiterRating, localInternalNotes)}
+                        className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] rounded-full shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Lock className="w-3 h-3" />
+                        <span>שמור הערכה פנימית 💾</span>
+                      </button>
+                    </div>
+
                     {/* Change Status select */}
                     <div className="space-y-1 text-xs">
                       <span className="text-[10px] text-gray-400 font-bold block">עדכן סטטוס מועמד/ת שוטף:</span>
@@ -3889,6 +5487,126 @@ export default function App() {
                       </div>
                     </div>
 
+                    {/* Quick Email Dispatcher (תקשורת מהירה וטמפלטים) */}
+                    <div className="bg-neutral-pink-50/40 p-4 rounded-2xl border border-neutral-pink-200/40 text-xs space-y-3 text-right" dir="rtl">
+                      <div className="flex items-center justify-between border-b border-neutral-pink-200/30 pb-2">
+                        <div className="flex items-center gap-1.5">
+                          <Mail className="w-4 h-4 text-neutral-pink-600 shrink-0" />
+                          <span className="font-bold text-gray-900 text-xs">שליחת מייל מהיר וטמפלטים ✉️</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsEmailBoxOpen(!isEmailBoxOpen)}
+                          className="text-[10px] text-neutral-pink-600 hover:text-neutral-pink-700 font-bold underline cursor-pointer"
+                        >
+                          {isEmailBoxOpen ? "הסתר ✖" : "הצג עורך ✎"}
+                        </button>
+                      </div>
+
+                      {isEmailBoxOpen && (
+                        <div className="space-y-3 animate-fadeIn">
+                          {/* Template Type selection */}
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-gray-400 font-bold block">בחרו תבנית פנייה:</span>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setEmailTemplateType("interview")}
+                                className={`py-1.5 px-3 rounded-xl border font-bold text-[10px] text-center transition cursor-pointer ${
+                                  emailTemplateType === "interview"
+                                    ? "bg-neutral-pink-100 border-neutral-pink-300 text-neutral-pink-800"
+                                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                                }`}
+                              >
+                                📞 זימון לראיון ראשוני
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEmailTemplateType("rejection")}
+                                className={`py-1.5 px-3 rounded-xl border font-bold text-[10px] text-center transition cursor-pointer ${
+                                  emailTemplateType === "rejection"
+                                    ? "bg-rose-100 border-rose-300 text-rose-800"
+                                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                                }`}
+                              >
+                                🚫 מכתב סיום תהליך (דחייה)
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Email subject input */}
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-700 block">נושא המכתב:</label>
+                            <input
+                              type="text"
+                              value={emailSubject}
+                              onChange={(e) => setEmailSubject(e.target.value)}
+                              placeholder="הזינו נושא למייל..."
+                              className="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs text-right focus:outline-none focus:ring-1 focus:ring-neutral-pink-300 focus:border-neutral-pink-400 transition"
+                            />
+                          </div>
+
+                          {/* Email body text area */}
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-700 block">תוכן המייל (ניתן לערוך בחופשיות):</label>
+                            <textarea
+                              rows={6}
+                              value={emailBody}
+                              onChange={(e) => setEmailBody(e.target.value)}
+                              placeholder="הקלידו או ערכו את תוכן ההודעה..."
+                              className="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-xs text-right focus:outline-none focus:ring-1 focus:ring-neutral-pink-300 focus:border-neutral-pink-400 transition resize-none leading-relaxed"
+                            />
+                          </div>
+
+                          {/* Trigger Send */}
+                          <button
+                            type="button"
+                            onClick={handleSendQuickEmail}
+                            className="w-full py-2.5 bg-neutral-pink-500 hover:bg-neutral-pink-600 text-white font-bold text-xs rounded-full shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <Send className="w-4 h-4" />
+                            <span>הכן טיוטה ופתח בתוכנת המייל ✉️</span>
+                          </button>
+
+                          {/* Interactive Audit Confirmation */}
+                          {showEmailConfirmation && (
+                            <div className="mt-3 p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-right space-y-3 animate-fadeIn">
+                              <div className="flex items-center gap-2 text-amber-800">
+                                <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+                                <span className="font-bold">בקרה: האם המייל אכן נשלח בתוכנת הדואר? 📬</span>
+                              </div>
+                              <p className="text-gray-600 text-[11px] leading-relaxed">
+                                פתחנו עבורך את הטיוטה בתוכנת המייל החיצונית. אנא אשרו כאן האם שלחתם את ההודעה בפועל כדי לשמור על תיעוד היסטורי מדויק ומבוקר בתיק המועמד:
+                              </p>
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleConfirmEmailSent(true)}
+                                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded-xl shadow transition cursor-pointer text-center"
+                                >
+                                  כן, המייל נשלח בפועל! ✅
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleConfirmEmailSent(false)}
+                                  className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] rounded-xl shadow transition cursor-pointer text-center"
+                                >
+                                  השאר כטיוטה בלבד ⏳
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleCancelEmailLog}
+                                  className="py-2 px-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-[10px] rounded-xl transition cursor-pointer text-center"
+                                >
+                                  בטל תיעוד 🗑️
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     {renderActivityLog()}
                   </div>
                 ) : (
@@ -3905,6 +5623,36 @@ export default function App() {
         )}
 
       </main>
+
+      {/* Floating comparison bar at the bottom */}
+      <AnimatePresence>
+        {compareCandidateIds.length > 0 && currentTab !== "compare-candidates" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md border border-neutral-pink-200 shadow-xl px-5 py-3 rounded-full flex items-center gap-4 w-[90%] sm:w-auto justify-between sm:justify-start"
+          >
+            <span className="text-xs font-bold text-gray-800">
+              נבחרו {compareCandidateIds.length} מועמדים להשוואה
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentTab("compare-candidates")}
+                className="bg-neutral-pink-500 hover:bg-neutral-pink-600 text-white text-[11px] sm:text-xs font-bold px-4 py-2 rounded-full shadow transition shrink-0 cursor-pointer"
+              >
+                השווה כעת
+              </button>
+              <button
+                onClick={() => setCompareCandidateIds([])}
+                className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-full transition shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* FOOTER */}
       <footer className="border-t border-neutral-pink-200/70 bg-white/40 py-5 text-center text-xs text-gray-400">
@@ -4334,8 +6082,12 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {renderGuideModal()}
       {renderCvModal()}
       {renderSummaryModal()}
+      <AnimatePresence>
+        {taskModalOpen && renderTaskModal()}
+      </AnimatePresence>
     </div>
   );
 }

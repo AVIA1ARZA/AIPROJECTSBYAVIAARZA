@@ -3,172 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>אביה ארזה | פורטפוליו AI ואוטומציה עסקית</title>
+    <title>אווריה ארזה | פורטפוליו AI ואוטומציה</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=Noto+Serif+Hebrew:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        rosegold: {
+                            DEFAULT: '#B76E79',
+                            hover: '#A35C67',
+                            light: '#F5EBEB',
+                            border: '#E2D9D9'
+                        },
+                        stone: {
+                            dark: '#1C1917',
+                            muted: '#78716C'
+                        },
+                        bgMain: '#FAFAFA'
+                    },
+                    fontFamily: {
+                        sans: ['Assistant', 'sans-serif'],
+                        serif: ['Noto Serif Hebrew', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #38bdf8;
-            --accent: #818cf8;
-        }
-
+        /* מעברים חלקים לכל האתר */
         body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100/vh;
-        }
-
-        header {
-            background: linear-gradient(135deg, #1e1b4b, #0f172a);
-            padding: 4rem 2rem;
-            text-align: center;
-            border-bottom: 1px solid #334155;
-        }
-
-        header h1 {
-            font-size: 2.5rem;
-            margin: 0;
-            color: var(--text-color);
-        }
-
-        header h1 span {
-            color: var(--primary);
-        }
-
-        header p {
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 1rem auto 0 auto;
-        }
-
-        main {
-            max-width: 1200px;
-            margin: 3rem auto;
-            padding: 0 2rem;
-            flex-grow: 1;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2.5rem;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 2rem;
-            border: 1px solid #334155;
-            transition: transform 0.3s ease, border-color 0.3s ease;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-        }
-
-        .card h2 {
-            font-size: 1.5rem;
-            margin-top: 0;
-            color: var(--primary);
-        }
-
-        .card p {
-            color: var(--text-muted);
-            line-height: 1.6;
-            flex-grow: 1;
-        }
-
-        .tags {
-            margin: 1rem 0 1.5rem 0;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .tag {
-            background-color: #334155;
-            color: var(--text-color);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: #0f172a;
-            text-align: center;
-            padding: 0.75rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: opacity 0.2s;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-        }
-
-        footer {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
-            border-top: 1px solid #334155;
-            font-size: 0.9rem;
+            background-color: #FAFAFA;
+            color: #1C1917;
         }
     </style>
 </head>
-<body>
+<body class="font-sans antialiased min-h-screen flex flex-col justify-between">
 
-    <header>
-        <h1>הפורטפוליו של <span>אביה ארזה</span></h1>
-        <p>מערכות אוטומציה, פיתוח BI ופתרונות בינה מלאכותית (AI) מותאמים אישית לייעול תהליכים עסקיים.</p>
+    <header class="w-full max-w-4xl mx-auto text-center pt-20 pb-12 px-4">
+        <h1 class="text-4xl md:text-5xl font-bold text-stone-dark font-serif mb-4 tracking-tight">
+            הפורטפוליו של <span class="text-rosegold">אווריה ארזה</span>
+        </h1>
+        <p class="text-stone-muted text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+            מערכות אוטומציה, פיתוח BI ופתרונות בינה מלאכותית (AI) מותאמים אישית לייעול תהליכים עסקיים.
+        </p>
+        <div class="w-16 h-[2px] bg-rosegold mx-auto mt-8 opacity-60"></div>
     </header>
 
-    <main>
-        <div class="grid">
+    <main class="flex-grow w-full max-w-6xl mx-auto px-4 pb-24">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             
-            <div class="card">
-                <h2>📊 SQL Insurance Simulator & AI Mentor</h2>
-                <p>סימולטור ומנטור אישי חכם לתרגול וניתוח שאילתות SQL בעולמות הביטוח. המערכת מנתחת ביצועים, מזהה צווארי בקבוק בשאילתות ומספקת פידבק לוגי מותאם אישית תוך התחשבות במערכות לגאסי (AS400/DB2).</p>
-                <div class="tags">
-                    <span class="tag">React</span>
-                    <span class="tag">TypeScript</span>
-                    <span class="tag">Gemini API</span>
-                    <span class="tag">Vite</span>
+            <div class="bg-white border border-rosegold-border rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute top-0 left-0 right-0 h-[4px] bg-rosegold opacity-80"></div>
+                
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-2xl">📊</span>
+                        <h2 class="text-xl font-bold text-stone-dark font-serif">SQL Insurance Simulator & AI Mentor</h2>
+                    </div>
+                    
+                    <p class="text-stone-muted text-sm leading-relaxed mb-6">
+                        סימולטור ומנטור אישי חכם לתרגול וניתוח שאילתות SQL בעולמות הביטוח. המערכת מייצרת שאלות דינמיות מבוססות AI, מזהה צווארי בקבוק בביצועים ומספקת פידבק ארכיטקטוני מותאם אישית.
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="text-xs bg-rosegold-light text-rosegold px-3 py-1 rounded-full font-semibold">Vite</span>
+                        <span class="text-xs bg-rosegold-light text-rosegold px-3 py-1 rounded-full font-semibold">Gemini API</span>
+                        <span class="text-xs bg-rosegold-light text-rosegold px-3 py-1 rounded-full font-semibold">TypeScript</span>
+                        <span class="text-xs bg-rosegold-light text-rosegold px-3 py-1 rounded-full font-semibold">React</span>
+                    </div>
                 </div>
-                <a <div style="display: flex; gap: 1rem; margin-top: auto; width: 100%;">
-                    <a href="https://aiprojectsbyaviaarza.vercel.app" class="btn" target="_blank" style="flex: 1; text-align: center;">כניסה לאפליקציה 🚀</a>
-                    <a href="https://github.com/AVIA1ARZA/AIPROJECTSBYAVIAARZA/tree/main/SQL%20Insurance" class="btn" target="_blank" style="flex: 1; background: #334155; color: white; text-align: center;">קוד המקור 📂</a>
-                </div></a>
+
+                <div class="flex gap-4 w-full mt-auto">
+                    <a href="https://aiprojectsbyaviaarza.vercel.app" target="_blank" class="flex-1 text-center text-sm font-semibold text-white bg-rosegold hover:bg-rosegold-hover py-3 rounded-xl transition-colors duration-200 shadow-sm">
+                        כניסה לאפליקציה 🚀
+                    </a>
+                    <a href="https://github.com/AVIA1ARZA/AIPROJECTSBYAVIAARZA/tree/main/SQL%20Insurance" target="_blank" class="flex-1 text-center text-sm font-semibold text-rosegold border border-rosegold hover:bg-[#FDF8F8] py-3 rounded-xl transition-colors duration-200">
+                        קוד המקור 📂
+                    </a>
+                </div>
             </div>
 
-            <div class="card">
-                <h2>🧠 מערכת מסננת AI</h2>
-                <p>אפליקציה מתקדמת שפותחה ב-Google AI Studio המיועדת לסינון, עיבוד ואוטומציה של מסמכים ונתונים עסקיים בצורה מאובטחת ויעילה.</p>
-                <div class="tags">
-                    <span class="tag">Google AI Studio</span>
-                    <span class="tag">Gemini Models</span>
-                    <span class="tag">Automation</span>
+            <div class="bg-white border border-rosegold-border rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute top-0 left-0 right-0 h-[4px] bg-rosegold opacity-80"></div>
+                
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-2xl">🧠</span>
+                        <h2 class="text-xl font-bold text-stone-dark font-serif">מערכת מסננת AI</h2>
+                    </div>
+                    
+                    <p class="text-stone-muted text-sm leading-relaxed mb-6">
+                        אפליקציה מתקדמת שפותחה ב-Google AI Studio המיועדת לסינון, עיבוד, שליפת ישויות ואוטומציה מלאה של מסמכים ונתונים עסקיים מורכבים בצורה מאובטחת ויעילה.
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="text-xs bg-rosegold-light text-rosegold px-3 py-1 rounded-full font-semibold">Automation</span>
+                        <span class="text-xs bg-rosegold-light text-rosegold px-3 py-1 rounded-full font-semibold">Gemini Models</span>
+                        <span class="text-xs bg-rosegold-light text-rosegold px-3 py-1 rounded-full font-semibold">Google AI Studio</span>
+                    </div>
                 </div>
-                <a href="https://github.com/AVIA1ARZA/AIPROJECTSBYAVIAARZA/tree/main/%D7%9E%D7%A1%D7%A0%D7%A0%D7%AA" class="btn" target="_blank">צפייה בקוד המקור 📂</a>
+
+                <div class="flex gap-4 w-full mt-auto">
+                    <button disabled class="flex-1 text-center text-sm font-semibold text-gray-400 bg-gray-100 py-3 rounded-xl cursor-not-allowed">
+                        בקרוב... ⏳
+                    </button>
+                    <a href="https://github.com/AVIA1ARZA/AIPROJECTSBYAVIAARZA" target="_blank" class="flex-1 text-center text-sm font-semibold text-rosegold border border-rosegold hover:bg-[#FDF8F8] py-3 rounded-xl transition-colors duration-200">
+                        קוד המקור 📂
+                    </a>
+                </div>
             </div>
 
         </div>
     </main>
 
-    <footer>
-        © 2026 אביה ארזה. כל הזכויות שמורות. נבנה באמצעות GitHub Pages.
+    <footer class="w-full text-center py-6 border-t border-rosegold-border bg-white text-xs text-stone-muted">
+        <p>© 2026 אווריה ארזה. כל הזכויות שמורות. נבנה באמצעות GitHub Pages.</p>
     </footer>
 
 </body>
