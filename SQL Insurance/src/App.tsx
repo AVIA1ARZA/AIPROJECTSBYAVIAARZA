@@ -812,16 +812,16 @@ useEffect(() => {
             <div className="h-full w-full">
               <PracticeView 
                 onComplete={() => setActiveTab('completed')} 
-                history={completedQuestions.map(q => q.question.title)}
-                completedQuestions={completedQuestions.map(q => ({
-                  ...q,
-                  questionId: q.question.id,
-                  questionTitle: q.question.title,
-                  questionDescription: q.question.description,
-                  difficulty: q.question.difficulty,
-                  correctSql: q.question.correctSql,
-                  userId: user?.uid || ''
-                }) as any)} // Temporary cast to satisfy the flat interface expected by PracticeView
+                history={completedQuestions.map((q: any) => q.title || q.question?.title || 'שאילתת SQL')}
+          completedQuestions={completedQuestions.map((q: any) => ({
+            ...q,
+            questionId: q.question?.id || q.questionId || '',
+            questionTitle: q.title || q.question?.title || 'שאילתת SQL',
+            questionDescription: q.question?.description || q.questionDescription || '',
+            difficulty: q.question?.difficulty || q.difficulty || 'Medium',
+            correctSql: q.question?.correctSql || q.correctSql || '',
+            userId: user?.uid || ''
+          }) as any)}
                 targetedTopic={targetedTopic}
                 targetedDifficulty={targetedDifficulty}
                 onClearTargetedTopic={() => { setTargetedTopic(null); setTargetedDifficulty(null); }}
