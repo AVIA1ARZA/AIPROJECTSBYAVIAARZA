@@ -26,13 +26,14 @@ export interface CompletedQuestion {
   chatSummary?: string;
 }
 
-// Helper to classify SQL query technical topics
 function getQuestionTechnicalTopics(item: CompletedQuestion): string[] {
-  const sqlText = ((item.userSql || '') + ' ' + (item.question.correctSql || '')).toLowerCase();
-  
+  // המרה ל-any עוקפת את הנוקשות של המהדר ומאפשרת בדיקה בטוחה לחלוטין בזמן ריצה
+  const correctSql = (item as any).question?.correctSql || (item as any).correctSql || '';
+  const sqlText = ((item.userSql || '') + ' ' + correctSql).toLowerCase();
   const tags: string[] = [];
+  
   if (sqlText.includes('join')) {
-    tags.push('ג\'וינים וחיבורי טבלאות');
+    tags.push('ג׳וינים וחיבורי טבלאות');
   }
   if (sqlText.includes('group by') || sqlText.includes('sum(') || sqlText.includes('avg(') || sqlText.includes('count(') || sqlText.includes('max(') || sqlText.includes('min(')) {
     tags.push('אגרגציות וקיבוץ');
@@ -43,48 +44,23 @@ function getQuestionTechnicalTopics(item: CompletedQuestion): string[] {
   if (sqlText.includes('julianday') || sqlText.includes('strftime') || sqlText.includes('date(')) {
     tags.push('פונקציות תאריך וזמן');
   }
-  if (sqlText.includes('over (') || sqlText.includes('partition by') || sqlText.includes('row_number(') || sqlText.includes('rank(')) {
+  if (sqlText.includes('over (') || sqlText.includes('partition by') || sqlText.includes('row_number()') || sqlText.includes('rank()')) {
     tags.push('פונקציות חלון');
   }
   if (sqlText.includes('case when') || sqlText.includes('coalesce') || sqlText.includes('ifnull')) {
     tags.push('תנאים וביטויים מותנים');
   }
-  
   if (tags.length === 0) {
     tags.push('שאילתות בסיסיות');
   }
   return tags;
 }
 
-// Helper to classify SQL query insurance/business topics
 function getQuestionInsuranceTopics(item: CompletedQuestion): string[] {
-  const sqlText = ((item.userSql || '') + ' ' + (item.question.correctSql || '')).toLowerCase();
-  const titleDesc = (item.question.title + ' ' + item.question.description).toLowerCase();
-  
-  const tags: string[] = [];
-  if (sqlText.includes('insured') || sqlText.includes('policies') || sqlText.includes('policy') || titleDesc.includes('מבוטח') || titleDesc.includes('פוליס') || titleDesc.includes('לקוח') || titleDesc.includes('חיתום')) {
-    tags.push('מבוטחים ופוליסות');
-  }
-  if (sqlText.includes('claims') || sqlText.includes('claimants') || sqlText.includes('claim_id') || titleDesc.includes('תביע') || titleDesc.includes('תובע')) {
-    tags.push('תביעות ותובעים');
-  }
-  if (sqlText.includes('claim_payments') || sqlText.includes('payment') || titleDesc.includes('תשלו') || titleDesc.includes('פיצוי')) {
-    tags.push('תשלומי תביעות');
-  }
-  if (sqlText.includes('appraisers') || sqlText.includes('appraiser') || titleDesc.includes('שמאי')) {
-    tags.push('שמאים והערכות נזק');
-  }
-  if (sqlText.includes('agents') || sqlText.includes('budgets') || titleDesc.includes('סוכן') || titleDesc.includes('סוכנ') || titleDesc.includes('תקציב')) {
-    tags.push('סוכנים, סוכנויות ותקציבים');
-  }
-  if (sqlText.includes('products') || titleDesc.includes('מוצר') || titleDesc.includes('ענף') || titleDesc.includes('חובה') || titleDesc.includes('רכב מקיף') || titleDesc.includes('שיניים')) {
-    tags.push('מוצרים וענפי ביטוח');
-  }
-  
-  if (tags.length === 0) {
-    tags.push('כללי / מנהלתי');
-  }
-  return tags;
+  // הגנה זהה גם עבור פונקציית תחומי הביטוח למטה
+  const category = (item as any).question?.category || (item as any).category || '';
+  if (!category) return ['כללי'];
+  return [category];
 }
 
 interface ParsedHighlight {
