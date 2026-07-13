@@ -26,6 +26,16 @@ export interface CompletedQuestion {
   chatSummary?: string;
 }
 
+function formatTimestamp(timestamp: any): string {
+  if (!timestamp) return '';
+  const dateObj = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  
+  const timeStr = dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = dateObj.toLocaleDateString('he-IL');
+  
+  return `${timeStr} ${dateStr}`;
+}
+
 function getQuestionTechnicalTopics(item: CompletedQuestion): string[] {
   // המרה ל-any עוקפת את הנוקשות של המהדר ומאפשרת בדיקה בטוחה לחלוטין בזמן ריצה
   const correctSql = (item as any).question?.correctSql || (item as any).correctSql || '';
@@ -1655,7 +1665,7 @@ export const CompletedQueriesView: React.FC<Props> = ({
 
                         <span className="text-[10px] md:text-xs text-slate-400 flex items-center gap-1 sm:mr-auto pl-1 shrink-0">
                           <Clock className="w-3 h-3" />
-                          {item.timestamp.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} {item.timestamp.toLocaleDateString('he-IL')}
+                          {formatTimestamp(item.timestamp)}
                         </span>
                       </div>
                     
