@@ -232,15 +232,15 @@ export const CompletedQueriesView: React.FC<Props> = ({
     });
 
     // 1. Search filter
-    let filtered = items.filter(item => {
-      if (!searchTerm.trim()) return true;
-      const term = searchTerm.toLowerCase();
-      return (
-        item.question.title.toLowerCase().includes(term) ||
-        item.question.description.toLowerCase().includes(term) ||
-        (item.userSql || '').toLowerCase().includes(term)
-      );
-    });
+    let filtered = items.filter((item: any) => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    
+    const title = item.title || item.question?.title || '';
+    const description = item.questionDescription || item.question?.description || '';
+    
+    return title.toLowerCase().includes(term) || description.toLowerCase().includes(term);
+  });
 
     // 2. Difficulty Filter
     if (filterDifficulty !== 'all') {
