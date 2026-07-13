@@ -265,27 +265,11 @@ export const CompletedQueriesView: React.FC<Props> = ({
 
     // 5. Sorting
     const difficultyWeight = { 'Easy': 1, 'Medium': 2, 'Hard': 3, 'Expert': 4 };
-    return filtered.sort((a, b) => {
-      if (sortBy === 'date-desc') {
-        return b.timestamp.getTime() - a.timestamp.getTime();
-      }
-      if (sortBy === 'date-asc') {
-        return a.timestamp.getTime() - b.timestamp.getTime();
-      }
-      if (sortBy === 'score-desc') {
-        return b.score - a.score;
-      }
-      if (sortBy === 'score-asc') {
-        return a.score - b.score;
-      }
-      if (sortBy === 'diff-asc') {
-        return difficultyWeight[a.question.difficulty] - difficultyWeight[b.question.difficulty];
-      }
-      if (sortBy === 'diff-desc') {
-        return difficultyWeight[b.question.difficulty] - difficultyWeight[a.question.difficulty];
-      }
-      return 0;
-    });
+ return filtered.sort((a: any, b: any) => {
+    const timeA = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : (a.timestamp ? new Date(a.timestamp).getTime() : 0);
+    const timeB = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : (b.timestamp ? new Date(b.timestamp).getTime() : 0);
+    return timeB - timeA; // מציג מהחדש ביותר לישן ביותר
+  });
   }, [deduplicatedCompleted, searchTerm, filterDifficulty, filterTechTopic, filterInsuranceTopic, filterStatus, sortBy]);
 
   useEffect(() => {
