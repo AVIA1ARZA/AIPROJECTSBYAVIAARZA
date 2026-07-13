@@ -26,16 +26,6 @@ export interface CompletedQuestion {
   chatSummary?: string;
 }
 
-function formatTimestamp(timestamp: any): string {
-  if (!timestamp) return '';
-  const dateObj = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  
-  const timeStr = dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-  const dateStr = dateObj.toLocaleDateString('he-IL');
-  
-  return `${timeStr} ${dateStr}`;
-}
-
 function getQuestionTechnicalTopics(item: CompletedQuestion): string[] {
   // המרה ל-any עוקפת את הנוקשות של המהדר ומאפשרת בדיקה בטוחה לחלוטין בזמן ריצה
   const correctSql = (item as any).question?.correctSql || (item as any).correctSql || '';
@@ -1600,6 +1590,18 @@ export const CompletedQueriesView: React.FC<Props> = ({
               </div>
             ) : (
               processedCompleted.map((item, index) => {
+                            // 1. הפיכת הפריט ל-any כדי למנוע הצקות מ-TypeScript
+                const currentItem = item as any;
+
+                // 2. חילוץ מאובטח של כותרת, תיאור ורמת קושי
+                const safeTitle = currentItem.title || currentItem.question?.title || 'שאילתת SQL';
+                const safeDescription = currentItem.questionDescription || currentItem.question?.description || '';
+                const safeDifficulty = currentItem.difficulty || currentItem.question?.difficulty || 'Medium';
+
+                // 3. חילוץ ועיבוד מאובטח של הזמן מפיירבייס
+                const safeDate = currentItem.timestamp?.toDate ? currentItem.timestamp.toDate() : (currentItem.timestamp ? new Date(currentItem.timestamp) : new Date());
+                const displayTime = safeDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+                const displayDate = safeDate.toLocaleDateString('he-IL');
                 const itemId = item.id || (item.question.id + '-' + index);
                 const isSelected = selectedQueryIds.has(itemId);
                 return (
@@ -1641,12 +1643,12 @@ export const CompletedQueriesView: React.FC<Props> = ({
                       <div className="flex flex-wrap items-center gap-2">
                         <div className={cn(
                           "px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider shrink-0",
-                          ((item as any).difficulty || item.question?.difficulty || 'Easy') ? "bg-green-100 text-green-700" :
-                          ((item as any).difficulty || item.question?.difficulty || 'Medium') ? "bg-orange-100 text-orange-700" :
-                          ((item as any).difficulty || item.question?.difficulty || 'Hars') ? "bg-red-100 text-red-700" :
+                          safeDifficulty === 'Easy' ? "bg-green-100 text-green-700" :
+                          safeDifficulty === 'Medium' ? "bg-orange-100 text-orange-700" :
+                          safeDifficulty === 'Hard' ? "bg-red-100 text-red-700" :
                           "bg-purple-100 text-purple-700"
                         )}>
-                          {((item as any).difficulty || item.question?.difficulty || 'Easy') ? 'קל' : ((item as any).difficulty || item.question?.difficulty || 'Medium') ? 'בינוני' : ((item as any).difficulty || item.question?.difficulty || 'Hard') ? 'קשה' : 'מומחה'}
+                          safeDifficulty === 'Easy' ? 'קל' : safeDifficulty === 'Medium' ? 'בינוני' : safeDifficulty === 'Hard' ? 'קשה' : 'מומחה'
                         </div>
 
                         {/* Tech Tag Badges */}
@@ -1663,16 +1665,11 @@ export const CompletedQueriesView: React.FC<Props> = ({
                           </span>
                         ))}
 
-                        <span className="text-[10px] md:text-xs text-slate-400 flex items-center gap-1 sm:mr-auto pl-1 shrink-0">
-                          <Clock className="w-3 h-3" />
-                          {formatTimestamp(item.timestamp)}
-                        </span>
+                       {displayTime} {displayDate}
                       </div>
                     
-                    <h3 className="text-lg md:text-xl font-bold text-slate-800">{item.question.title}</h3>
-                    <p className="text-slate-600 text-xs md:text-sm leading-relaxed">
-                      {item.question.description}
-                    </p>
+                    <h3 className="text-lg md:text-xl font-bold text-slate-800">{safeTitle}</h3>
+                      <p className="text-slate-600 text-xs md:text-sm leading-relaxed">{safeDescription}</p>
                   </div>
 
                   <div className="flex sm:flex-col items-center gap-3 sm:gap-2 min-w-0 sm:min-w-[120px] w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0">
