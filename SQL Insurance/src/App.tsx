@@ -304,7 +304,7 @@ useEffect(() => {
     if (!user) return;
 
     // ניתוב חכם למצב אורח
-    const targetUid = user.uid === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJx9f92' : user.uid;
+    const targetUid = user.uid === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJ80D62' : user.uid;
     
     console.log("🔍 [Guest Mode Debug] מריץ שאילתה עבור UID:", targetUid);
 
