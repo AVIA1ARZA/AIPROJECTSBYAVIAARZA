@@ -303,23 +303,35 @@ export default function App() {
 useEffect(() => {
     if (!user) return;
 
-    // 1. הניתוב החכם עבור לשונית השאילתות
-    const targetUid = user.uid === 'guest-mode' ? 'tx7avyr8NGXLKfaLabMg5PasICb2' : user.uid;
+    // החליפי את המחרוזת הזו ב-UID האמיתי שלך מתוך פיירבייס
+    const targetUid = user.uid === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJ80D62' : user.uid;
+    
+    console.log("🔍 [Guest Mode Debug] מריץ שאילתה עבור UID:", targetUid);
 
+    // הסרנו את ה-orderBy מכאן כדי למנוע מפיירבייס להעלים מסמכים
     const q = query(
       collection(db, 'completed_questions'),
-      where('userId', '==', targetUid),
-      orderBy('timestamp', 'desc')
+      where('userId', '==', targetUid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log(`📊 [Guest Mode Debug] פיירבייס מצא והחזיר ${snapshot.size} מסמכים.`);
+      
       const questions = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as CompletedQuestion[];
       
-      setCompletedQuestions(questions);
+      // מיון בתוך הזיכרון של הדפדפן (בטוח לחלוטין ומונע בעיות אינדקס)
+      const sortedQuestions = questions.sort((a, b) => {
+        const timeA = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp).getTime();
+        const timeB = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp).getTime();
+        return timeB - timeA;
+      });
+      
+      setCompletedQuestions(sortedQuestions);
     }, (error) => {
+      console.error("❌ שגיאה בשורת השאילתה:", error);
       handleFirestoreError(error, OperationType.LIST, 'completed_questions');
     });
 
