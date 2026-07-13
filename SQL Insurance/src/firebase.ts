@@ -296,7 +296,7 @@ export const updateCompletedQuestion = async (submissionId: string, updates: Par
 export const getUserQuestions = async (userId: string): Promise<any> => {
   try {
     // הניתוב החכם למצב אורח
-    const targetUid = userId === 'guest-mode' ? 'WsFbR20jwDNdVteMUA5di6dpxwv1' : userId;
+    const targetUid = userId === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJ80D62' : userId;
 
     // שאילתה ללא orderBy בפיירבייס כדי למנוע שגיאות אינדקס בענן
     const q = query(
