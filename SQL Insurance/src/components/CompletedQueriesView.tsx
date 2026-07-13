@@ -1631,12 +1631,12 @@ export const CompletedQueriesView: React.FC<Props> = ({
                       <div className="flex flex-wrap items-center gap-2">
                         <div className={cn(
                           "px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider shrink-0",
-                          item.question.difficulty === 'Easy' ? "bg-green-100 text-green-700" :
-                          item.question.difficulty === 'Medium' ? "bg-orange-100 text-orange-700" :
-                          item.question.difficulty === 'Hard' ? "bg-red-100 text-red-700" :
+                          ((item as any).difficulty || item.question?.difficulty || 'Easy') ? "bg-green-100 text-green-700" :
+                          ((item as any).difficulty || item.question?.difficulty || 'Medium') ? "bg-orange-100 text-orange-700" :
+                          ((item as any).difficulty || item.question?.difficulty || 'Hars') ? "bg-red-100 text-red-700" :
                           "bg-purple-100 text-purple-700"
                         )}>
-                          {item.question.difficulty === 'Easy' ? 'קל' : item.question.difficulty === 'Medium' ? 'בינוני' : item.question.difficulty === 'Hard' ? 'קשה' : 'מומחה'}
+                          {((item as any).difficulty || item.question?.difficulty || 'Easy') ? 'קל' : ((item as any).difficulty || item.question?.difficulty || 'Medium') ? 'בינוני' : ((item as any).difficulty || item.question?.difficulty || 'Hard') ? 'קשה' : 'מומחה'}
                         </div>
 
                         {/* Tech Tag Badges */}
