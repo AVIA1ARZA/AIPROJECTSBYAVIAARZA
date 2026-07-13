@@ -230,7 +230,7 @@ export const CompletedQueriesView: React.FC<Props> = ({
     
     completed.forEach(item => {
       // Use question title as a more reliable key for grouping similar questions if IDs are randomized
-      const key = item.question?.title || item.question?.id;
+      const key = (item as any).title || item.question?.title || item.question?.id || item.id;
       if (!key) return;
       
       const existing = bestByQuestion.get(key);
