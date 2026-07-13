@@ -300,66 +300,27 @@ export default function App() {
     setActiveTab('practice');
   };
 
-  useEffect(() => {
-    if (!user) {
-      setCompletedQuestions([]);
-      return;
-    }
+useEffect(() => {
+    if (!user) return;
 
-const targetUid = user?.uid === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJx9f92' : user?.uid;
+    // 1. הניתוב החכם עבור לשונית השאילתות
+    const targetUid = user.uid === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJx9f92' : user.uid;
 
-const q = query(
-  collection(db, 'completed_questions'),
-  where('userId', '==', targetUid),
-  orderBy('timestamp', 'desc')
-);
+    const q = query(
+      collection(db, 'completed_questions'),
+      where('userId', '==', targetUid),
+      orderBy('timestamp', 'desc')
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const questions = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          timestamp: data.timestamp?.toDate() || new Date(),
-          question: {
-            id: data.questionId,
-            title: data.questionTitle,
-            description: data.questionDescription,
-            difficulty: data.difficulty,
-            correctSql: data.correctSql,
-          }
-        } as CompletedQuestion;
-      });
+      const questions = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as CompletedQuestion[];
+      
       setCompletedQuestions(questions);
     }, (error) => {
-      if (error.code === 'failed-precondition') {
-        // Fallback for missing index: Fetch without order and sort in memory
-        const fallbackQ = query(
-          collection(db, 'completed_questions'),
-          where('userId', '==', user.uid),
-          limit(100)
-        );
-        onSnapshot(fallbackQ, (fallbackSnapshot) => {
-          const fbQuestions = fallbackSnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              ...data,
-              timestamp: data.timestamp?.toDate() || new Date(),
-              question: {
-                id: data.questionId,
-                title: data.questionTitle,
-                description: data.questionDescription,
-                difficulty: data.difficulty,
-                correctSql: data.correctSql,
-              }
-            } as CompletedQuestion;
-          });
-          setCompletedQuestions(fbQuestions.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
-        });
-      } else {
-        handleFirestoreError(error, OperationType.LIST, 'completed_questions');
-      }
+      handleFirestoreError(error, OperationType.LIST, 'completed_questions');
     });
 
     return () => unsubscribe();
@@ -371,9 +332,12 @@ const q = query(
       return;
     }
 
+    // 2. הניתוב החכם עבור לשונית השמורים
+    const targetUid = user.uid === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJx9f92' : user.uid;
+
     const q = query(
-      collection(db, 'saved_tips'),
-      where('userId', '==', user.uid)
+      collection(db, 'saved tips'),
+      where('userId', '==', targetUid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -384,6 +348,8 @@ const q = query(
 
     return () => unsubscribe();
   }, [user]);
+
+
 
   if (loading) {
     return (
