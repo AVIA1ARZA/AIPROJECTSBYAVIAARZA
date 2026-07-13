@@ -1817,7 +1817,7 @@ export const CompletedQueriesView: React.FC<Props> = ({
                     <div className="space-y-2 md:space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-[10px] md:text-xs font-bold text-emerald-600 uppercase tracking-widest">פתרון נכון לדוגמא</h4>
-                        {!item.question.correctSql && (
+                        {(item.question?.correctSql || (item as any).correctSql || '') && (
                           <button
                             onClick={() => handleRepair(item)}
                             disabled={repairingIds.has(item.id || '')}
@@ -1833,14 +1833,14 @@ export const CompletedQueriesView: React.FC<Props> = ({
                         )}
                       </div>
                       
-                      {item.question.correctSql ? (
+                      {(item.question?.correctSql || (item as any).correctSql || '') ? (
                         <div className="rounded-lg md:rounded-xl overflow-hidden border border-emerald-200">
                           <SyntaxHighlighter
                             language="sql"
                             style={vscDarkPlus}
                             customStyle={{ margin: 0, padding: '0.75rem md:1rem', fontSize: '0.7rem md:0.75rem' }}
                           >
-                            {formatSql(item.question.correctSql)}
+                            {formatSql((item.question?.correctSql || (item as any).correctSql || ''))}
                           </SyntaxHighlighter>
                         </div>
                       ) : (
