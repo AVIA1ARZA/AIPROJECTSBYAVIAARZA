@@ -756,7 +756,7 @@ export const CompletedQueriesView: React.FC<Props> = ({
   // Calculate stats
   const difficulties = ['Easy', 'Medium', 'Hard', 'Expert'] as const;
   const stats = difficulties.map(diff => {
-    const items = deduplicatedCompleted.filter(c => c.question.difficulty === diff);
+    const items = deduplicatedCompleted.filter((c: any) => (c.difficulty || c.question?.difficulty) === diff);
     const avgScore = items.length > 0 
       ? Math.round(items.reduce((acc, curr) => acc + curr.score, 0) / items.length)
       : 0;
