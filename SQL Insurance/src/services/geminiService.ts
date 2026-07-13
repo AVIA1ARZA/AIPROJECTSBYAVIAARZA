@@ -20,7 +20,7 @@ async function callGeminiWithRetry<T>(
   retries = 6,
   delay = 2000
 ): Promise<T> {
-  const ai = new GoogleGenAI({ apiKey: (import.meta as any).env.VITE_GEMINI_API_KEY });;
+  const ai = new GoogleGenAI({ apiKey: (import.meta as any).env.VITE_GEMINI_API_KEY });
   // Alternate between flash and flash-lite on retries to bypass specific model load
   const model = retries % 2 === 0 ? "gemini-3-flash-preview" : "gemini-3.1-flash-lite-preview";
   
