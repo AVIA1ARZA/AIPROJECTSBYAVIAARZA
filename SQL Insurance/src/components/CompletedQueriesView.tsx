@@ -662,7 +662,7 @@ export const CompletedQueriesView: React.FC<Props> = ({
   const handleOpenInlineComparison = (item: CompletedQuestion) => {
     // find all other attempts for this exact question
     const otherAttempts = deduplicatedCompleted.filter(other => 
-      other.question.title === item.question.title && 
+      other.question.title === (item.question?.title || (item as any).title || 'שאילתת SQL') && 
       (other.id !== item.id || other.timestamp.getTime() !== item.timestamp.getTime())
     );
 
@@ -716,16 +716,21 @@ export const CompletedQueriesView: React.FC<Props> = ({
     setRepairingIds(prev => new Set(prev).add(item.id!));
     try {
       // 1. Try fallback
-      const fallback = FALLBACK_QUESTIONS.find(f => 
-        f.title === item.question.title || 
-        f.description === item.question.description
+    const fallback = FALLBACK_QUESTIONS.find(f =>
+      f.title === (item.question?.title || (item as any).title) ||
+      f.description === (item.question?.description || (item as any).questionDescription)
+    );
+    let solution = fallback?.correctSql;
+
+    // 2. If not in fallback, use AI
+    if (!solution) {
+      solution = await recoverCorrectSql(
+        item.question?.title || (item as any).title || '', 
+        item.question?.description || (item as any).questionDescription || '', 
+        undefined, 
+        language
       );
-      let solution = fallback?.correctSql;
-      
-      // 2. If not in fallback, use AI
-      if (!solution) {
-        solution = await recoverCorrectSql(item.question.title, item.question.description, undefined, language);
-      }
+    }
       
       if (solution) {
         await updateDoc(doc(db, 'completed_questions', item.id), {
@@ -1745,7 +1750,7 @@ export const CompletedQueriesView: React.FC<Props> = ({
                     <h4 className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">משוב והסבר</h4>
                     <div className="bg-white p-3 md:p-4 rounded-lg md:rounded-xl border border-slate-200 text-xs md:text-sm text-slate-700 leading-relaxed">
                       <div className="markdown-body">
-                        <Markdown components={getMarkdownComponents(item.id, item.question.title, 'query')}>{item.explanation}</Markdown>
+                        <Markdown components={getMarkdownComponents(item.id, (item.question?.title || (item as any).title || 'שאילתת SQL'), 'query')}>{item.explanation}</Markdown>
                       </div>
                     </div>
                   </div>
@@ -1770,7 +1775,7 @@ export const CompletedQueriesView: React.FC<Props> = ({
                             {item.chatSummary}
                           </div>
                           <button
-                            onClick={() => handleToggleSaveTip(item.chatSummary || '', 'general', item.id, item.question.title, 'query')}
+                            onClick={() => handleToggleSaveTip(item.chatSummary || '', 'general', item.id, (item.question?.title || (item as any).title || 'שאילתת SQL'), 'query')}
                             className={cn(
                               "absolute top-2 p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer shadow-sm border border-blue-100 bg-white",
                               isHe ? "right-1" : "left-1",
@@ -1799,7 +1804,7 @@ export const CompletedQueriesView: React.FC<Props> = ({
                                   : "bg-blue-600 text-white rounded-tl-none shadow-sm"
                               )}>
                                 <div className="markdown-body">
-                                  <Markdown components={msg.role === 'model' ? getMarkdownComponents(item.id, item.question.title, 'query') : {}}>{msg.content}</Markdown>
+                                  <Markdown components={msg.role === 'model' ? getMarkdownComponents(item.id, (item.question?.title || (item as any).title || 'שאילתת SQL'), 'query') : {}}>{msg.content}</Markdown>
                                 </div>
                               </div>
                             </div>
