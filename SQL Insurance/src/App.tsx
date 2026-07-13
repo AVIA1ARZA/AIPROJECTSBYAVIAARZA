@@ -42,6 +42,29 @@ export default function App() {
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
   const [apiKeySuccess, setApiKeySuccess] = useState(false);
 
+  const handleGuestLogin = () => {
+    // עדכון הסטייט של המשתמש למצב אורח מיוחד
+    setUser({
+      uid: 'guest-mode',
+      displayName: 'מגייס/ת או מראיין/ת (אורח)',
+      email: 'guest@portfolio.com',
+      emailVerified: true,
+      isAnonymous: false,
+      metadata: {},
+      providerData: []
+    } as any);
+
+    // עדכון הפרופיל כדי שהמערכת תדע שהאורח כבר השלים הגדרות ראשוניות
+    setProfile({
+      role: 'Guest Viewer',
+      department: 'Recruitment',
+      setupCompleted: true,
+      updatedAt: new Date()
+    } as any);
+    
+    setLoading(false);
+  };
+
   const [activeSchemaId, setActiveSchemaId] = useState<string>(() => {
     return localStorage.getItem('active_schema_id') || 'insurance';
   });
@@ -198,7 +221,7 @@ export default function App() {
   useEffect(() => {
     // Check if API key is configured
     const checkKey = () => {
-      const key = process.env.GEMINI_API_KEY;
+      const key = import.meta.env.VITE_GEMINI_API_KEY;
       const isMissing = !key || key === "AIzaSyAi0SHQtfOuAqQFH_DtmopzU2myWS278f4";
       setApiKeyMissing(isMissing);
       
@@ -445,6 +468,12 @@ export default function App() {
           >
             English
           </button>
+          <button
+          onClick={handleGuestLogin}
+          className="w-full flex items-center justify-center gap-3 px-6 py-3.5 mt-3 bg-slate-950 text-white border-2 border-slate-950 rounded-none hover:bg-slate-800 transition-colors duration-200 font-bold"
+        >
+          🔑 כניסה מהירה כאורח (מצב דמו)
+        </button>
         </div>
 
         <div className="max-w-md w-full bg-white rounded-none p-8 md:p-10 border-4 border-slate-950 text-center space-y-8 relative">

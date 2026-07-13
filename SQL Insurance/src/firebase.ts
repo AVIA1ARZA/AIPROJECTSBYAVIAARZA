@@ -293,29 +293,34 @@ export const updateCompletedQuestion = async (submissionId: string, updates: Par
     handleFirestoreError(error, OperationType.UPDATE, `completed_questions/${submissionId}`);
   }
 };
-
-export const getUserQuestions = async (userId: string): Promise<UserQuestion[]> => {
+export const getUserCompletedQuestions = async (userId: string): Promise<any> => {
   try {
+    // הניתוב החכם למצב אורח
+    const targetUid = userId === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJx9f92' : userId;
+
+    // שאילתה ללא orderBy בפיירבייס כדי למנוע שגיאות אינדקס בענן
     const q = query(
-      collection(db, 'user_questions'),
-      where('userId', '==', userId)
+      collection(db, 'completed_questions'),
+      where('userId', '==', targetUid)
     );
-    const snapshot = await getDocs(q);
-    const questions = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        timestamp: data.timestamp?.toDate() || new Date()
-      } as UserQuestion;
-    });
+
+    const querySnapshot = await getDocs(q);
+    
+    // שומרים את התוצאות לתוך המשתנה שהפונקציה צריכה בהמשך
+    const questions = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
     // Sort in memory by timestamp descending to bypass Firestore composite index requirements
     return questions.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    
   } catch (error) {
     handleFirestoreError(error, OperationType.GET, 'user_questions');
     return [];
   }
 };
+;
 
 export const getCompletedQuestions = async (userId: string): Promise<CompletedQuestion[]> => {
   try {

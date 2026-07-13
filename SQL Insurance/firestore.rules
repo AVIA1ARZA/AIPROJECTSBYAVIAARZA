@@ -1,155 +1,21 @@
-// ===============================================================
-// Assumed Data Model
-// ===============================================================
-//
-// Collection: completed_questions
-// Document ID: auto-generated
-// Fields:
-//   - questionId: string (required) - Original question ID
-//   - questionTitle: string (required) - Question title
-//   - questionDescription: string (required) - Question description
-//   - difficulty: string (required, enum: Easy, Medium, Hard) - Difficulty level
-//   - userSql: string (required) - SQL submitted by user
-//   - score: number (required, 0-100) - Grade score
-//   - isCorrect: boolean (required) - Whether the answer was correct
-//   - explanation: string (required) - Detailed feedback
-//   - timestamp: timestamp (required) - When it was completed
-//   - userId: string (required) - UID of the user who completed it
-//
-// Collection: users
-// Document ID: userId (UID)
-// Fields:
-//   - department: string (required) - User's department
-//   - role: string (required) - User's role
-//   - setupCompleted: boolean (required) - Whether setup is done
-//   - updatedAt: timestamp (required) - Last update time
-//
-// ===============================================================
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // ===============================================================
-    // Helper Functions
-    // ===============================================================
-    
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-    
-    function isDocOwner() {
-      return isAuthenticated() && request.auth.uid == resource.data.userId;
-    }
-
-    function isAdmin() {
-      return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "avia1arza@gmail.com" && request.auth.token.email_verified == true)); // Default admin
-    }
-    
-    function isValidCompletedQuestion(data) {
-      return data.keys().hasAll(['questionId', 'questionTitle', 'difficulty', 'userSql', 'score', 'isCorrect', 'userId', 'timestamp']) &&
-             data.questionId is string && data.questionId.size() > 0 &&
-             data.questionTitle is string && data.questionTitle.size() > 0 &&
-             data.difficulty in ['Easy', 'Medium', 'Hard', 'Expert'] &&
-             data.userSql is string && data.userSql.size() < 5000 &&
-             data.score is number && data.score >= 0 && data.score <= 100 &&
-             data.isCorrect is bool &&
-             (data.userId == request.auth.uid || isAdmin()) &&
-             data.timestamp is timestamp &&
-             (!('correctSql' in data) || (data.correctSql is string && data.correctSql.size() < 5000)) &&
-             (!('chatSummary' in data) || (data.chatSummary is string && data.chatSummary.size() < 10000)) &&
-             (!('chatHistory' in data) || (data.chatHistory is list && data.chatHistory.size() <= 100)) &&
-             (!('role' in data) || (data.role == null || (data.role is string && data.role.size() < 100))) &&
-             (!('department' in data) || (data.department == null || (data.department is string && data.department.size() < 100)));
-    }
-
-    function isValidUserProfile(data) {
-      return data.keys().hasAll(['department', 'role', 'setupCompleted', 'updatedAt']) &&
-             data.department is string && data.department.size() > 0 && data.department.size() < 50 &&
-             data.role is string && data.role.size() > 0 && data.role.size() < 50 &&
-             data.setupCompleted is bool &&
-             data.updatedAt is timestamp;
-    }
-
-    function isValidUserQuestion(data) {
-      return data.keys().hasAll(['userId', 'id', 'title', 'description', 'difficulty', 'correctSql', 'insights', 'timestamp']) &&
-             (data.userId == request.auth.uid || isAdmin()) &&
-             data.id is string && data.id.size() > 0 &&
-             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-             data.description is string && data.description.size() > 0 && data.description.size() < 5000 &&
-             data.difficulty in ['Easy', 'Medium', 'Hard', 'Expert'] &&
-             data.correctSql is string && data.correctSql.size() > 0 && data.correctSql.size() < 5000 &&
-             data.timestamp is timestamp;
-    }
-
-    // ===============================================================
-    // Rules
-    // ===============================================================
-
-    match /users/{userId} {
-      // Users can only read and write their own profile
-      allow read: if isOwner(userId) || isAdmin();
-      allow create, update: if isOwner(userId) && isValidUserProfile(request.resource.data);
-      allow delete: if isAdmin();
-    }
-
-    match /completed_questions/{docId} {
-      // Users can only read their own completed questions
-      allow read: if isDocOwner() || isAdmin();
+    // חוקי הגנה עבור השאילתות שהושלמו
+    match /completed_questions/{documentId} {
+      // מותר לאורחים לקרוא את השאילתות של אוויה, או למשתמש מחובר לקרוא את של עצמו
+      allow read: if resource.data.userId == 'vvYYxgC6UMO3uUPbt2qvpDJx9f92' || 
+                  (request.auth != null && request.auth.uid == resource.data.userId);
       
-      // Users can only create records for themselves
-      allow create: if isAuthenticated() && isValidCompletedQuestion(request.resource.data);
-      
-      // Allow users to update their own records or admins to update everything
-      allow update: if (isDocOwner() || isAdmin()) && 
-                      isValidCompletedQuestion(request.resource.data);
-      
-      allow delete: if isAdmin();
+      // יצירה ועדכון מותרים רק למשתמש עצמו עבור הנתונים שלו
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
-    match /user_questions/{docId} {
-      // Users can read own questions or admins can read everything
-      allow read: if isDocOwner() || isAdmin();
-      
-      // Users can create own questions
-      allow create: if isAuthenticated() && isValidUserQuestion(request.resource.data);
-      
-      allow update: if (isDocOwner() || isAdmin()) && 
-                      isValidUserQuestion(request.resource.data);
-
-      allow delete: if isAdmin();
-    }
-
-    match /performance_analysis/{userId} {
-      // Users can only read and write their own analysis
-      allow read: if isOwner(userId) || isAdmin();
-      allow create, update: if (isOwner(userId) || isAdmin()) && 
-                        (request.resource.data.keys().hasAll(['strengths', 'weaknesses', 'recommendations', 'updatedAt']) || isAdmin());
-    }
-
-    match /saved_tips/{docId} {
-      allow read, delete: if isDocOwner() || isAdmin();
-      allow create, update: if (isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin())) && 
-                    request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() < 10000 &&
-                    request.resource.data.category in ['weakness', 'recommendation', 'general'] &&
-                    request.resource.data.savedAt is timestamp;
-    }
-
-    match /daily_exercises/{docId} {
-      allow read: if isAuthenticated() && (docId.hasPrefix(request.auth.uid) || isAdmin());
-      allow create, update: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdmin());
-      allow delete: if isAdmin();
-    }
-
-    // Default deny
-    match /{document=**} {
-      allow read, write: if false;
+    // חוקי הגנה עבור פרופילי משתמשים
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
