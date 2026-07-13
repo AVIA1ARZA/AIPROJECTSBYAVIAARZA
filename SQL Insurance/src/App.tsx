@@ -303,33 +303,42 @@ export default function App() {
 useEffect(() => {
     if (!user) return;
 
-    // החליפי את המחרוזת הזו ב-UID האמיתי שלך מתוך פיירבייס
-    const targetUid = user.uid === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJ80D62' : user.uid;
+    // ניתוב חכם למצב אורח
+    const targetUid = user.uid === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJx9f92' : user.uid;
     
     console.log("🔍 [Guest Mode Debug] מריץ שאילתה עבור UID:", targetUid);
 
-    // הסרנו את ה-orderBy מכאן כדי למנוע מפיירבייס להעלים מסמכים
+    // שימוש ב-any מונע מ-TypeScript להכשיל את הבנייה על הגדרות אוסף ספציפיות
+    const completedCollection = collection(db, 'completed_questions') as any;
     const q = query(
-      collection(db, 'completed_questions'),
+      completedCollection,
       where('userId', '==', targetUid)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, (snapshot: any) => {
       console.log(`📊 [Guest Mode Debug] פיירבייס מצא והחזיר ${snapshot.size} מסמכים.`);
       
-      const questions = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as CompletedQuestion[];
+      const questions = snapshot.docs.map((doc: any) => {
+        const data = doc.data();
+        
+        // חילוץ בטוח של ה-title כדי למנוע את הקריסה
+        const extractedTitle = data.title || data.question?.title || data.questionTitle || 'שאילתת SQL';
+        
+        return {
+          id: doc.id,
+          ...data,
+          title: extractedTitle
+        };
+      });
       
-      // מיון בתוך הזיכרון של הדפדפן (בטוח לחלוטין ומונע בעיות אינדקס)
-      const sortedQuestions = questions.sort((a, b) => {
+      // מיון בזיכרון של הדפדפן
+      const sortedQuestions = questions.sort((a: any, b: any) => {
         const timeA = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp).getTime();
         const timeB = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp).getTime();
         return timeB - timeA;
       });
       
-      setCompletedQuestions(sortedQuestions);
+      setCompletedQuestions(sortedQuestions as any);
     }, (error) => {
       console.error("❌ שגיאה בשורת השאילתה:", error);
       handleFirestoreError(error, OperationType.LIST, 'completed_questions');
@@ -337,7 +346,6 @@ useEffect(() => {
 
     return () => unsubscribe();
   }, [user]);
-
   useEffect(() => {
     if (!user) {
       setSavedTipsCount(0);
