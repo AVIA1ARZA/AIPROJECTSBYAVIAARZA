@@ -306,12 +306,13 @@ export default function App() {
       return;
     }
 
-    const q = query(
-      collection(db, 'completed_questions'),
-      where('userId', '==', user.uid),
-      orderBy('timestamp', 'desc'),
-      limit(100)
-    );
+const targetUid = user?.uid === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJx9f92' : user?.uid;
+
+const q = query(
+  collection(db, 'completed_questions'),
+  where('userId', '==', targetUid),
+  orderBy('timestamp', 'desc')
+);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const questions = snapshot.docs.map(doc => {
