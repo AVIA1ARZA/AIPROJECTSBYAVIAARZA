@@ -304,7 +304,7 @@ useEffect(() => {
     if (!user) return;
 
     // 1. הניתוב החכם עבור לשונית השאילתות
-    const targetUid = user.uid === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJx9f92' : user.uid;
+    const targetUid = user.uid === 'guest-mode' ? 'tx7avyr8NGXLKfaLabMg5PasICb2' : user.uid;
 
     const q = query(
       collection(db, 'completed_questions'),
