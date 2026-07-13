@@ -1653,7 +1653,7 @@ export const CompletedQueriesView: React.FC<Props> = ({
                           safeDifficulty === 'Hard' ? "bg-red-100 text-red-700" :
                           "bg-purple-100 text-purple-700"
                         )}>
-                          safeDifficulty === 'Easy' ? 'קל' : safeDifficulty === 'Medium' ? 'בינוני' : safeDifficulty === 'Hard' ? 'קשה' : 'מומחה'
+                          {safeDifficulty === 'Easy' ? 'קל' : safeDifficulty === 'Medium' ? 'בינוני' : safeDifficulty === 'Hard' ? 'קשה' : 'מומחה'}
                         </div>
 
                         {/* Tech Tag Badges */}
