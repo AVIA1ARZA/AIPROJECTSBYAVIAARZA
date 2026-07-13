@@ -293,7 +293,7 @@ export const updateCompletedQuestion = async (submissionId: string, updates: Par
     handleFirestoreError(error, OperationType.UPDATE, `completed_questions/${submissionId}`);
   }
 };
-export const getUserCompletedQuestions = async (userId: string): Promise<any> => {
+export const getUserQuestions = async (userId: string): Promise<any> => {
   try {
     // הניתוב החכם למצב אורח
     const targetUid = userId === 'guest-mode' ? 'vvYYxgC6UMO3uUPbt2qvpDJx9f92' : userId;
