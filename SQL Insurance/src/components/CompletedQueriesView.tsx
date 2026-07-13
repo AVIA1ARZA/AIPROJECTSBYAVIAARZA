@@ -1668,8 +1668,12 @@ export const CompletedQueriesView: React.FC<Props> = ({
                        {displayTime} {displayDate}
                       </div>
                     
-                    <h3 className="text-lg md:text-xl font-bold text-slate-800">{safeTitle}</h3>
-                      <p className="text-slate-600 text-xs md:text-sm leading-relaxed">{safeDescription}</p>
+                    <h3 className="text-lg md:text-xl font-bold text-slate-800">
+                      {item.question?.title || (item as any).title || 'שאילתת SQL'}
+                    </h3>
+                    <p className="text-slate-600 text-xs md:text-sm leading-relaxed">
+                      {item.question?.description || (item as any).questionDescription || ''}
+                    </p>
                   </div>
 
                   <div className="flex sm:flex-col items-center gap-3 sm:gap-2 min-w-0 sm:min-w-[120px] w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0">
