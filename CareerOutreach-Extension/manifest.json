@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "CareerOutreach AI MVP",
+  "version": "1.1",
+  "description": "תוסף אופטימיזציה ופניות למשרות עם ניהול קו''ח דינמי",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "*://*.linkedin.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "16 PX.png",
+      "48": "48 PX.png",
+      "128": "128 PX.png"
+    }
+  },
+  "icons": {
+    "16": "16 PX.png",
+    "48": "48 PX.png",
+    "128": "128 PX.png"
+  }
+}

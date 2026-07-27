@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html dir="rtl" style="width: 400px; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; background-color: #f8fafc;">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { padding: 14px; color: #1e293b; background-color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; margin: 0; box-sizing: border-box; }
+    .app-title { color: #0f172a; margin-top: 0; margin-bottom: 12px; text-align: center; font-weight: 800; font-size: 16px; letter-spacing: -0.5px; }
+    .tabs { display: flex; background: #e2e8f0; padding: 3px; border-radius: 8px; margin-bottom: 14px; gap: 2px; }
+    .tab-btn { flex: 1; padding: 6px 2px; text-align: center; cursor: pointer; background: none; border: none; font-weight: 700; color: #64748b; font-size: 10.5px; border-radius: 6px; transition: all 0.2s ease; white-space: nowrap; }
+    .tab-btn.active { color: #4f46e5; background: #ffffff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    button.primary-btn { width: 100%; color: white; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12.5px; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); }
+    button.primary-btn { background-color: #4f46e5; }
+    button.primary-btn:hover { background-color: #4338ca; transform: translateY(-1px); }
+    textarea { width: 100%; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-family: inherit; font-size: 12px; resize: vertical; background: #ffffff; }
+    #output { background: #ffffff; padding: 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; max-height: 220px; overflow-y: auto; text-align: right; line-height: 1.6; font-family: inherit; white-space: pre-wrap; direction: rtl; }
+    #output ul { padding-right: 18px; margin: 6px 0; }
+    #output li { margin-bottom: 4px; color: #334155; }
+    #output h3 { margin-top: 14px; margin-bottom: 6px; font-size: 12.5px; color: #4f46e5; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; font-weight: 700; }
+    .download-buttons-container { display: flex; gap: 8px; margin-top: 12px; }
+    .download-btn { flex: 1; font-size: 11px; padding: 8px 4px; }
+    .job-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s ease; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <h3 class="app-title">🎯 CareerOutreach AI</h3>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-analyze-btn">ניתוח</button>
+    <button class="tab-btn" id="tab-global-btn">🌐 חיפוש גלובלי</button>
+    <button class="tab-btn" id="tab-cv-btn">קו"ח</button>
+    <button class="tab-btn" id="tab-tracker-btn">מעקב</button>
+    <button class="tab-btn" id="tab-companies-btn">חברות</button>
+  </div>
+
+  <!-- טאב 1: ניתוח משרה -->
+  <div id="tab-analyze" class="tab-content active">
+    <button id="analyze-btn" class="primary-btn">נתח משרה בעמוד זה</button>
+    <div id="results" style="margin-top: 15px; display: none;">
+      <h4 style="margin-bottom: 8px; color: #10b981; font-size: 13px;">תוצאת הניתוח והפנייה:</h4>
+      <div id="output"></div>
+      <div class="download-buttons-container" id="download-container" style="display: none;">
+        <button id="download-en-btn" class="primary-btn download-btn" style="background-color: #2563eb;">📝 קו"ח באנגלית (Word)</button>
+        <button id="download-he-btn" class="primary-btn download-btn" style="background-color: #0d9488;">📝 קו"ח בעברית (Word)</button>
+      </div>
+      <button id="mark-applied-btn" class="primary-btn" style="background-color: #f59e0b; margin-top: 10px; font-size: 12.5px; display: none;">✅ הגשתי מועמדות! (שמור למעקב)</button>
+      <p id="applied-status" style="font-size: 12px; color: #f59e0b; text-align: center; margin-top: 5px; font-weight: bold; display: none;">✓ המשרה נוספה בהצלחה!</p>
+    </div>
+  </div>
+
+  <!-- 🟢 טאב 2 חדש: חיפוש גלובלי ברשת -->
+  <div id="tab-global" class="tab-content">
+    <p style="font-size: 11.5px; color: #64748b; margin-top: 0; line-height: 1.4;">
+      מנוע ה-AI יסרוק את אתרי המשרות, דפי הקריירה והרשת לאיתור משרות חדשות מ-3 הימים האחרונים בהתאמה של 70%+:
+    </p>
+    <button id="global-search-btn" class="primary-btn" style="background-color: #8b5cf6; margin-bottom: 12px;">🚀 הרץ חיפוש גלובלי ברשת</button>
+    <div id="global-results-div" style="margin-bottom: 12px; display: none;">
+      <div id="global-output" style="background: white; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; max-height: 230px; overflow-y: auto; text-align: right; line-height: 1.6; direction: rtl;"></div>
+    </div>
+  </div>
+
+  <!-- טאב 3: ניהול קורות חיים -->
+  <div id="tab-cv" class="tab-content">
+    <button id="upload-btn" class="primary-btn" style="background-color: #3b82f6; margin-bottom: 12px;">העלי קובץ קורות חיים (PDF / TXT)</button>
+    <input type="file" id="cv-file-input" accept=".pdf,.txt" style="display: none;">
+    <textarea id="cv-text" rows="12"></textarea>
+    <button id="save-cv-btn" class="primary-btn" style="margin-top: 10px; background-color: #10b981;">שמור קורות חיים</button>
+    <p id="save-status" style="font-size: 12px; color: #10b981; text-align: center; margin-top: 8px; font-weight: bold; display: none;">✓ נשמר בהצלחה!</p>
+  </div>
+
+  <!-- טאב 4: מעקב הגשות -->
+  <div id="tab-tracker" class="tab-content">
+    <div id="tracker-list" style="max-height: 250px; overflow-y: auto; margin-bottom: 10px;"></div>
+    <button id="clear-tracker-btn" class="primary-btn" style="background-color: #ef4444; font-size: 11.5px; padding: 8px;">❌ נקה את כל ההיסטוריה</button>
+  </div>
+
+  <!-- טאב 5: מעקב חברות -->
+  <div id="tab-companies" class="tab-content">
+    <p style="font-size: 11.5px; color: #64748b; margin-top: 0; line-height: 1.4;">רשמי את שם החברה. מנוע ה-AI יסרוק את הרשת באופן אוטומטי ויאתר משרות פתוחות התואמות לפרופיל שלך:</p>
+    
+    <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+      <input type="text" id="comp-name" placeholder="שם החברה (למשל: Microsoft)" style="flex: 2; padding: 8px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+      <button id="add-company-btn" class="primary-btn" style="flex: 1; padding: 8px; font-size: 12px; background-color: #4f46e5;">+ הוסף</button>
+    </div>
+
+    <button id="scan-all-btn" class="primary-btn" style="background-color: #10b981; margin-bottom: 12px;">🔍 חפש משרות בחברות שברשימה</button>
+    
+    <div id="companies-results-div" style="margin-bottom: 12px; display: none;">
+      <div id="companies-output" style="background: white; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; max-height: 180px; overflow-y: auto; text-align: right; line-height: 1.6; direction: rtl;"></div>
+    </div>
+
+    <div id="company-list" style="max-height: 100px; overflow-y: auto; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 10px;"></div>
+
+    <div style="background: #f1f5f9; padding: 10px; border-radius: 6px;">
+      <h4 style="margin: 0 0 4px 0; color: #4f46e5; font-size: 12px; font-weight: 700;">✨ חברות מומלצות עבורך (AI):</h4>
+      <button id="get-suggestions-btn" class="primary-btn" style="background-color: #6b21a8; font-size: 11px; padding: 6px 10px; margin-bottom: 8px;">🧠 גלה חברות מתאימות</button>
+      <div id="suggestions-list" style="max-height: 130px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
