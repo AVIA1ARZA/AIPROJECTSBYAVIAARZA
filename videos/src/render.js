@@ -4,10 +4,10 @@ const path = require('path');
 const mode = process.argv[2];
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox','--allow-file-access-from-files','--font-render-hinting=none'] });
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport: { width: +(process.env.W||1920), height: +(process.env.H||1080) }, deviceScaleFactor: 1 });
   page.on('pageerror', e => console.error('PAGEERR', e.message));
   page.on('console', m => { if (m.type()==='error') console.error('CONSOLE', m.text()); });
-  await page.goto('file://' + path.resolve('scene.html'));
+  await page.goto('file://' + path.resolve((process.env.SCENE||'scene.html')));
   await page.evaluate(() => window.ready);
   if (mode === 'stills') {
     for (const t of process.argv[3].split(',').map(Number)) {
@@ -16,7 +16,7 @@ const mode = process.argv[2];
     }
   } else {
     const FPS = 30, N = 450;
-    const ff = spawn('ffmpeg', ['-y','-f','image2pipe','-framerate',String(FPS),'-c:v','png','-i','-','-c:v','libx264','-pix_fmt','yuv420p','-crf','16','-preset','medium','-r',String(FPS),'silent.mp4'], { stdio: ['pipe','inherit','inherit'] });
+    const ff = spawn('ffmpeg', ['-y','-f','image2pipe','-framerate',String(FPS),'-c:v','png','-i','-','-c:v','libx264','-pix_fmt','yuv420p','-crf','16','-preset','medium','-r',String(FPS),(process.env.OUT||'silent.mp4')], { stdio: ['pipe','inherit','inherit'] });
     for (let i = 0; i < N; i++) {
       await page.evaluate(t => window.setT(t), i / FPS);
       const buf = await page.screenshot({ type: 'png' });

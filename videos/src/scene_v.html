@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Holisticlick – 15s</title>
+<style>
+@font-face{font-family:AsH;font-weight:600;src:url(fonts/assistant-hebrew-600-normal.woff2)}
+@font-face{font-family:AsH;font-weight:700;src:url(fonts/assistant-hebrew-700-normal.woff2)}
+@font-face{font-family:AsH;font-weight:800;src:url(fonts/assistant-hebrew-800-normal.woff2)}
+@font-face{font-family:AsL;font-weight:600;src:url(fonts/assistant-latin-600-normal.woff2)}
+@font-face{font-family:AsL;font-weight:700;src:url(fonts/assistant-latin-700-normal.woff2)}
+@font-face{font-family:AsL;font-weight:800;src:url(fonts/assistant-latin-800-normal.woff2)}
+@font-face{font-family:VrH;font-weight:400;src:url(fonts/varela-round-hebrew-400-normal.woff2)}
+@font-face{font-family:VrL;font-weight:400;src:url(fonts/varela-round-latin-400-normal.woff2)}
+:root{
+  --ivory:#FDFBF7;--linen:#F5EDE1;--cream:#F6ECE0;--line:#E3D6C3;
+  --earth:#8C6249;--earth-d:#704E38;--forest:#2D4739;--forest-d:#1F3327;--ink:#2C362A;
+  --sage-bg:#E9F0E4;--disabled:#C9D3C6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;background:var(--ivory);overflow:hidden}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;direction:ltr;font-family:VrL,VrH,sans-serif;color:var(--ink)}
+.panel{position:absolute;left:0;width:1080px;height:960px;overflow:hidden}#pR{top:0}#pL{top:960px}
+.panel svg{position:absolute;left:0;top:0}
+.as{font-family:AsL,AsH,sans-serif}
+.mk{background:var(--c,var(--forest));-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
+.emb{-webkit-mask-image:url(emblem.png);mask-image:url(emblem.png)}
+.wrd{-webkit-mask-image:url(word.png);mask-image:url(word.png)}
+
+/* ---------- phone ---------- */
+#phone{position:absolute;left:650px;top:128px;transform-origin:0 0;transform:scale(.86);width:450px;height:920px;border-radius:70px;background:#2C362A;
+  box-shadow:0 40px 80px rgba(44,54,42,.28),0 8px 18px rgba(44,54,42,.25),inset 0 0 0 3px #46524a}
+#screen{position:absolute;left:14px;top:14px;width:422px;height:892px;border-radius:57px;background:var(--ivory);overflow:hidden;direction:rtl}
+#notch{position:absolute;left:50%;top:14px;width:116px;height:32px;border-radius:16px;background:#1b221b;transform:translateX(-50%);z-index:5}
+#hdr{position:absolute;top:60px;left:26px;right:26px;height:44px;display:flex;align-items:center;gap:10px}
+#hdr .emb{width:36px;height:36px}
+#hdr b{font:700 21px AsL,AsH;color:var(--forest)}
+#hdr small{margin-inline-start:auto;font:600 15px AsL,AsH;color:var(--earth);background:var(--linen);padding:5px 12px;border-radius:14px}
+#prog{position:absolute;top:116px;left:26px;right:26px;height:6px;display:flex;gap:8px}
+#prog i{flex:1;border-radius:3px;background:var(--line);position:relative;overflow:hidden}
+#prog i u{position:absolute;inset:0;background:var(--forest);transform-origin:right;transform:scaleX(0);border-radius:3px}
+#steps{position:absolute;top:146px;left:26px;right:26px;bottom:28px}
+.step{position:absolute;inset:0;opacity:0}
+.step h1{font:800 36px AsL,AsH;color:var(--forest);line-height:1.1}
+.step .sub{font:400 19px VrL,VrH;color:var(--earth);margin-top:8px}
+.card{position:relative;height:100px;border-radius:24px;border:2px solid var(--line);background:#fff;margin-top:14px;display:flex;align-items:center;gap:14px;padding:0 20px}
+.card .tt{font:700 23px AsL,AsH;color:var(--ink)}
+.card .ss{font:400 17px VrL,VrH;color:var(--earth);margin-top:3px}
+.card .rd{margin-inline-start:auto;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center}
+.card .ico{width:54px;height:54px;border-radius:18px;background:var(--linen);display:flex;align-items:center;justify-content:center}
+.card.sel{border-color:var(--forest);background:var(--sage-bg)}
+.card.sel .rd{background:var(--forest);border-color:var(--forest)}
+.rd svg{opacity:0}.card.sel .rd svg,.pay.sel .rd svg{opacity:1}
+.btn{position:absolute;left:0;right:0;bottom:0;height:68px;border-radius:34px;background:var(--disabled);color:#fff;font:700 23px AsL,AsH;display:flex;align-items:center;justify-content:center;gap:12px}
+.btn.on{background:var(--forest)}
+.btn.ghost{background:transparent;border:2px solid var(--forest);color:var(--forest)}
+.lbl{font:700 19px AsL,AsH;color:var(--ink);margin:22px 0 10px}
+.days{display:flex;gap:9px}
+.day{flex:1;height:92px;border-radius:22px;border:2px solid var(--line);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.day span{font:600 16px AsL,AsH;color:var(--earth)}.day b{font:800 27px AsL,AsH;color:var(--ink)}
+.day.off{background:var(--linen);opacity:.6}
+.day.sel{background:var(--forest);border-color:var(--forest)}.day.sel span,.day.sel b{color:#fff}
+.times{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.tm{height:58px;border-radius:29px;border:2px solid var(--line);background:#fff;font:700 22px AsL,AsH;display:flex;align-items:center;justify-content:center}
+.tm.sel{background:var(--forest);border-color:var(--forest);color:#fff}
+.note{margin-top:22px;border-radius:20px;background:var(--linen);padding:14px 18px;display:flex;gap:12px;align-items:center;font:400 17px VrL,VrH;color:var(--earth-d)}
+.sum{margin-top:18px;border-radius:26px;background:#fff;border:2px solid var(--line);padding:20px 22px}
+.sum .r{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font:400 19px VrL,VrH;color:var(--earth)}
+.sum .r b{font:700 21px AsL,AsH;color:var(--ink)}
+.sum hr{border:0;border-top:2px dashed var(--line);margin:10px 0}
+.sum .tot b{font:800 36px AsL,AsH;color:var(--forest)}
+.pay{display:flex;align-items:center;gap:14px;height:76px;border-radius:24px;border:2px solid var(--line);background:#fff;padding:0 20px;margin-top:12px;font:700 22px AsL,AsH}
+.pay .rd{margin-inline-start:auto;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center}
+.pay.sel{border-color:var(--forest);background:var(--sage-bg)}.pay.sel .rd{background:var(--forest);border-color:var(--forest)}
+.pay .bd{width:46px;height:46px;border-radius:16px;background:var(--linen);display:flex;align-items:center;justify-content:center;font:800 20px AsL,AsH;color:var(--forest)}
+.spin{width:26px;height:26px;border-radius:50%;border:4px solid rgba(255,255,255,.4);border-top-color:#fff}
+#s4{text-align:center}
+#okc{width:140px;height:140px;border-radius:50%;background:var(--forest);margin:34px auto 0;display:flex;align-items:center;justify-content:center;position:relative}
+#okc:before{content:"";position:absolute;inset:-14px;border-radius:50%;border:3px solid var(--forest);opacity:var(--ring,0);transform:scale(var(--ringS,1))}
+#s4 h1{font-size:54px;margin-top:26px}
+#s4 .sub{font-size:20px;line-height:1.5;margin-top:10px}
+#s4 .sum{text-align:right;margin-top:26px}
+.rip{position:absolute;border-radius:50%;background:rgba(45,71,57,.28);border:2px solid rgba(45,71,57,.35);pointer-events:none;opacity:0;z-index:6}
+
+/* ---------- notification ---------- */
+#notif{position:absolute;left:250px;top:978px;width:580px;border-radius:34px;background:rgba(255,255,255,.97);
+  box-shadow:0 26px 60px rgba(44,54,42,.28),0 4px 14px rgba(44,54,42,.14);padding:20px 24px;display:flex;gap:18px;align-items:center;direction:rtl;opacity:0;z-index:10}
+#notif .ic{width:72px;height:72px;border-radius:20px;background:var(--ivory);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none}
+#notif .ic .emb{width:50px;height:50px}
+#notif .tx{flex:1}
+#notif .top{display:flex;justify-content:space-between;font:700 18px AsL,AsH;color:var(--earth)}
+#notif .top span:last-child{font-weight:600;color:#9a8a78}
+#notif .ti{font:800 29px AsL,AsH;color:var(--ink);margin-top:3px;line-height:1.2}
+#notif .su{font:400 18px VrL,VrH;color:var(--earth);margin-top:4px}
+#notif .ok{position:absolute;left:-14px;top:-14px;width:44px;height:44px;border-radius:50%;background:var(--forest);display:flex;align-items:center;justify-content:center;border:4px solid #fff}
+
+/* ---------- captions / divider / end ---------- */
+.cap{position:absolute;display:flex;justify-content:center;z-index:8}
+.cap div{font:700 27px AsL,AsH;color:var(--forest);background:rgba(253,251,247,.92);border:2px solid var(--line);padding:9px 28px;border-radius:30px;box-shadow:0 6px 16px rgba(44,54,42,.10);opacity:0;direction:rtl}
+#capL{left:0;width:1080px;top:1470px}#capR{left:0;width:640px;top:290px}
+#chipL,#chipR{position:absolute;top:30px;font:800 24px AsL,AsH;color:#fff;background:var(--forest);padding:7px 22px;border-radius:24px;z-index:8;letter-spacing:.2px}
+#chipL{left:36px;top:992px}#chipR{left:36px;top:212px}
+#chipL{background:var(--earth)}
+#divider{position:absolute;left:0;top:955px;width:1080px;height:10px;background:var(--ivory);box-shadow:0 0 22px rgba(44,54,42,.22);z-index:7}
+#end{position:absolute;inset:0;background:rgba(253,251,247,.93);opacity:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;direction:rtl}
+#end .emb{width:200px;height:200px}
+#end .wrd{width:520px;height:89px;margin-top:22px}
+#end .tag{font:700 50px AsL,AsH;color:var(--earth);margin-top:30px}
+#end .sm{font:400 26px VrL,VrH;color:var(--forest);margin-top:16px;letter-spacing:.3px}
+#fade{position:absolute;inset:0;background:var(--ivory);opacity:1;z-index:30;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<div class="panel" id="pR">
+<svg id="artR" width="1080" height="960" viewBox="0 0 1080 960">
+  <rect width="1080" height="960" fill="url(#rBg)"/>
+  <rect y="890" width="1080" height="70" fill="#DCE6D2"/>
+  <rect y="884" width="1080" height="10" fill="#CBD9C0"/>
+  <g transform="translate(-953.0,-62.0) scale(1.1)">
+    <circle cx="1130" cy="560" r="270" fill="#F6ECE0" opacity=".7"/>
+    <circle cx="1130" cy="560" r="200" fill="#FDFBF7" opacity=".45"/>
+    <!-- mat -->
+    <rect x="975" y="868" width="330" height="40" rx="20" fill="#B58A68"/>
+    <rect x="975" y="868" width="330" height="14" rx="7" fill="#C79B78"/>
+    <!-- bottle + towel -->
+    <g transform="translate(1270,0)">
+      <rect x="0" y="796" width="34" height="84" rx="14" fill="#2D4739"/><rect x="8" y="784" width="18" height="16" rx="4" fill="#8C6249"/>
+    </g>
+    <!-- client -->
+    <g id="client">
+      <!-- ponytail (behind) -->
+      <g id="pony" transform="rotate(0 1170 560)">
+        <path d="M1166 556 C1216 548 1236 600 1224 664 C1214 636 1196 604 1166 600Z" fill="#2B1D17"/>
+      </g>
+      <!-- legs crossed -->
+      <path d="M1000 858 C1040 800 1170 804 1262 852 C1232 892 1060 894 1000 858Z" fill="#2D4739"/>
+      <path d="M1050 856 C1110 828 1190 836 1250 860" fill="none" stroke="#1F3327" stroke-width="3" opacity=".6"/>
+      <ellipse cx="1030" cy="868" rx="26" ry="13" fill="#B97E5B"/><ellipse cx="1232" cy="868" rx="26" ry="13" fill="#B97E5B"/>
+      <!-- torso -->
+      <g id="cTorso">
+        <path d="M1054 700 C1054 650 1082 636 1130 636 C1178 636 1206 650 1206 700 L1206 836 C1206 852 1190 858 1130 858 C1070 858 1054 852 1054 836Z" fill="#8C6249"/>
+        <path d="M1090 640 C1100 668 1160 668 1170 640" fill="none" stroke="#704E38" stroke-width="4"/>
+        <rect x="1056" y="780" width="148" height="14" fill="#704E38" opacity=".35"/>
+      </g>
+      <rect x="1114" y="606" width="32" height="40" rx="14" fill="#A66F4E"/>
+      <!-- head -->
+      <g id="cHead">
+        <circle cx="1130" cy="588" r="50" fill="#B97E5B"/>
+        <path d="M1078 586 C1074 530 1190 520 1184 586 C1170 556 1112 548 1078 586Z" fill="#2B1D17"/>
+        <circle cx="1100" cy="604" r="8" fill="#E08E7A" opacity=".5"/><circle cx="1160" cy="604" r="8" fill="#E08E7A" opacity=".5"/>
+        <g id="cEyes" fill="#2B1D17"><circle cx="1112" cy="594" r="5.5"/><circle cx="1148" cy="594" r="5.5"/></g>
+        <g id="cEyesH" fill="none" stroke="#2B1D17" stroke-width="4" stroke-linecap="round" opacity="0"><path d="M1102 598 q10 -12 20 0"/><path d="M1138 598 q10 -12 20 0"/></g>
+        <path d="M1100 580 q12 -6 22 0 M1138 580 q12 -6 22 0" fill="none" stroke="#2B1D17" stroke-width="3" stroke-linecap="round"/>
+        <path id="cSmile" d="M1118 616 q12 8 24 0" fill="none" stroke="#7A3F30" stroke-width="3.5" stroke-linecap="round"/>
+        <path id="cSmileB" d="M1110 612 q20 28 40 0Z" fill="#8A3F38" opacity="0"/>
+      </g>
+      <!-- arms + phone -->
+      <path d="M1074 690 L1054 764 L1106 744" fill="none" stroke="#B97E5B" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M1186 690 L1206 764 L1154 744" fill="none" stroke="#B97E5B" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="1070" cy="694" r="21" fill="#8C6249"/><circle cx="1190" cy="694" r="21" fill="#8C6249"/>
+      <g transform="translate(1130,742) rotate(-4)">
+        <rect x="-32" y="-58" width="64" height="112" rx="11" fill="#2C362A"/>
+        <rect x="-27" y="-52" width="54" height="100" rx="7" fill="#FDFBF7"/>
+        <rect id="cScr" x="-27" y="-52" width="54" height="100" rx="7" fill="#2D4739" opacity="0"/>
+        <rect x="-18" y="-42" width="36" height="9" rx="4" fill="#2D4739"/>
+        <rect x="-18" y="-24" width="36" height="16" rx="6" fill="#E9F0E4" stroke="#E3D6C3"/>
+        <rect x="-18" y="-2" width="36" height="16" rx="6" fill="#E9F0E4" stroke="#E3D6C3"/>
+        <rect x="-18" y="26" width="36" height="14" rx="7" fill="#2D4739"/>
+      </g>
+      <ellipse id="thumb" cx="1112" cy="758" rx="9" ry="13" fill="#B97E5B" transform="rotate(20 1112 758)"/>
+      <!-- success badge -->
+      <g id="cBadge" transform="translate(1130,500) scale(0)">
+        <circle r="34" fill="#2D4739" stroke="#FDFBF7" stroke-width="6"/>
+        <path d="M-15 1 L-4 12 L16 -10" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+    </g>
+  
+  </g>
+</svg>
+</div>
+<div class="panel" id="pL">
+<svg id="artL" width="1080" height="960" viewBox="0 227 960 853">
+  <defs>
+    <clipPath id="clipL"><rect x="0" y="0" width="960" height="1080"/></clipPath>
+    <clipPath id="clipR"><rect x="962" y="0" width="958" height="1080"/></clipPath>
+    <linearGradient id="wallG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F9F1E6"/><stop offset="1" stop-color="#F1E3D1"/></linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6E2" stop-opacity=".75"/><stop offset="1" stop-color="#FFF6E2" stop-opacity="0"/></linearGradient>
+    <radialGradient id="lampGlow"><stop offset="0" stop-color="#FFE9B8" stop-opacity=".85"/><stop offset="1" stop-color="#FFE9B8" stop-opacity="0"/></radialGradient>
+    <linearGradient id="rBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4F8EF"/><stop offset="1" stop-color="#E5EEDC"/></linearGradient>
+    <symbol id="star" viewBox="-10 -10 20 20"><path d="M0-10 C1.5-3 3-1.5 10 0 C3 1.5 1.5 3 0 10 C-1.5 3 -3 1.5 -10 0 C-3-1.5 -1.5-3 0-10Z"/></symbol>
+  </defs>
+  <!-- =============== LEFT : coach at home =============== -->
+  <g clip-path="url(#clipL)">
+    <rect width="958" height="1080" fill="url(#wallG)"/>
+    <!-- window + light beam -->
+    <g transform="translate(560,92)">
+      <polygon points="0,0 250,0 470,720 -170,720" fill="url(#beam)" opacity=".9"/>
+      <rect width="250" height="320" rx="12" fill="#FDFBF7" stroke="#E3D6C3" stroke-width="8"/>
+      <rect x="14" y="14" width="222" height="292" rx="4" fill="#DDEBE4"/>
+      <circle cx="170" cy="90" r="34" fill="#FFF3D6"/>
+      <path d="M14 306 L14 230 C60 200 90 215 130 190 C170 170 200 195 236 175 L236 306Z" fill="#B9D0BE"/>
+      <rect x="121" y="14" width="8" height="292" fill="#FDFBF7"/><rect x="14" y="156" width="222" height="8" fill="#FDFBF7"/>
+    </g>
+    <!-- wall art -->
+    <g transform="translate(150,150)">
+      <rect width="170" height="210" rx="6" fill="#FDFBF7" stroke="#8C6249" stroke-width="9"/>
+      <circle cx="85" cy="70" r="22" fill="none" stroke="#2D4739" stroke-width="5"/>
+      <path d="M85 190 C40 160 38 120 85 108 C132 120 130 160 85 190Z" fill="none" stroke="#2D4739" stroke-width="5"/>
+      <path d="M85 108 L85 190" stroke="#2D4739" stroke-width="4"/>
+    </g>
+    <!-- floor -->
+    <rect y="820" width="958" height="260" fill="#E8DAC3"/>
+    <rect y="814" width="958" height="12" fill="#D9C8AC"/>
+    <ellipse cx="470" cy="940" rx="430" ry="62" fill="#D6BF9C" opacity=".65"/>
+    <!-- floor lamp -->
+    <ellipse cx="58" cy="310" rx="120" ry="120" fill="url(#lampGlow)"/>
+    <rect x="54" y="330" width="8" height="500" fill="#704E38"/>
+    <ellipse cx="58" cy="836" rx="36" ry="9" fill="#704E38"/>
+    <path d="M18 330 L26 262 L90 262 L98 330Z" fill="#F5EDE1" stroke="#E3D6C3" stroke-width="3"/>
+    <!-- plant -->
+    <g transform="translate(905,0)">
+      <path d="M0 740 C-60 690 -50 600 -8 560 C10 610 20 680 0 740Z" fill="#4F7A5A"/>
+      <path d="M0 740 C60 700 70 620 38 560 C10 620 -6 690 0 740Z" fill="#3D6349"/>
+      <path d="M0 740 C-30 660 -10 600 14 520 C34 600 28 680 0 740Z" fill="#5E8C69"/>
+      <path d="M-40 740 L40 740 L30 830 L-30 830Z" fill="#B58A68"/>
+      <rect x="-44" y="730" width="88" height="16" rx="6" fill="#C79B78"/>
+    </g>
+    <!-- sofa -->
+    <rect x="120" y="826" width="26" height="40" rx="6" fill="#704E38"/><rect x="810" y="826" width="26" height="40" rx="6" fill="#704E38"/>
+    <rect x="150" y="462" width="660" height="250" rx="56" fill="#43624F"/>
+    <rect x="120" y="648" width="730" height="184" rx="38" fill="#2D4739"/>
+    <rect x="150" y="634" width="670" height="52" rx="26" fill="#4C6D58"/>
+    <!-- left arm of sofa already behind person: drawn here -->
+    <rect x="96" y="560" width="92" height="276" rx="42" fill="#355142"/>
+    <rect x="780" y="560" width="92" height="276" rx="42" fill="#355142"/>
+    <!-- mug on right arm + steam -->
+    <g transform="translate(826,0)">
+      <rect x="-22" y="518" width="44" height="42" rx="9" fill="#FDFBF7" stroke="#E3D6C3" stroke-width="3"/>
+      <path d="M22 528 C40 528 40 548 22 548" fill="none" stroke="#E3D6C3" stroke-width="5"/>
+      <g id="steam" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round">
+        <path id="st1" d="M-8 506 C-18 492 0 484 -8 470"/>
+        <path id="st2" d="M6 506 C-4 490 14 482 6 466"/>
+      </g>
+    </g>
+
+    <!-- pillow + coach -->
+    <ellipse cx="206" cy="636" rx="104" ry="30" fill="#F6ECE0" stroke="#E3D6C3" stroke-width="3"/>
+    <!-- legs -->
+    <g id="legs">
+      <path d="M520 566 C570 548 610 540 650 548 C700 556 735 580 765 584 L778 614 C778 632 772 640 756 640 L738 640 C700 640 662 626 640 618 C600 640 560 640 520 640Z" fill="#8C6249"/>
+      <path d="M640 618 C660 626 700 640 738 640" fill="none" stroke="#704E38" stroke-width="3" opacity=".5"/>
+      <ellipse cx="776" cy="622" rx="30" ry="19" fill="#FDFBF7" stroke="#E3D6C3" stroke-width="2"/>
+    </g>
+    <!-- far arm (does the Yes!) behind torso -->
+    <g id="farArm" transform="translate(300,596)">
+      <g id="upper">
+        <line x1="0" y1="0" x2="74" y2="0" stroke="#E2AE8A" stroke-width="24" stroke-linecap="round"/>
+        <line x1="0" y1="0" x2="34" y2="0" stroke="#FDFBF7" stroke-width="34" stroke-linecap="round"/>
+        <g id="fore" transform="translate(74,0)">
+          <line x1="0" y1="0" x2="62" y2="0" stroke="#E2AE8A" stroke-width="22" stroke-linecap="round"/>
+          <circle id="fist" cx="70" cy="0" r="19" fill="#E2AE8A"/>
+          <path d="M60 -10 q10 -6 20 0 M60 -2 q10 -6 20 0 M60 6 q10 -6 20 0" fill="none" stroke="#C98C68" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+      </g>
+    </g>
+    <!-- torso (breathes) -->
+    <g id="torso">
+      <rect x="272" y="558" width="268" height="84" rx="40" fill="#FDFBF7" stroke="#E3D6C3" stroke-width="3"/>
+      <path d="M300 576 C380 566 440 570 520 580" fill="none" stroke="#EADFCC" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <!-- neck + head -->
+    <rect x="258" y="590" width="36" height="40" rx="16" fill="#D99D78"/>
+    <g id="head" transform="rotate(-6 232 596)">
+      <ellipse cx="170" cy="622" rx="86" ry="30" fill="#4A3326"/>
+      <ellipse cx="206" cy="586" rx="64" ry="58" fill="#4A3326"/>
+      <circle cx="232" cy="596" r="50" fill="#E2AE8A"/>
+      <path d="M176 584 C176 534 292 530 290 586 C276 560 222 556 176 584Z" fill="#4A3326"/>
+      <circle cx="198" cy="552" r="26" fill="#4A3326"/>
+      <circle cx="210" cy="606" r="9" fill="#F0A58E" opacity=".45"/><circle cx="256" cy="606" r="9" fill="#F0A58E" opacity=".45"/>
+      <g id="eyesRelax" fill="none" stroke="#3A2A20" stroke-width="3.5" stroke-linecap="round">
+        <path d="M200 592 q10 8 20 0"/><path d="M244 592 q10 8 20 0"/>
+      </g>
+      <g id="eyesHappy" fill="none" stroke="#3A2A20" stroke-width="4" stroke-linecap="round" opacity="0">
+        <path d="M200 596 q10 -12 20 0"/><path d="M244 596 q10 -12 20 0"/>
+      </g>
+      <g id="eyesOpen" opacity="0">
+        <circle cx="210" cy="592" r="6" fill="#3A2A20"/><circle cx="254" cy="592" r="6" fill="#3A2A20"/>
+        <circle cx="212" cy="590" r="2" fill="#fff"/><circle cx="256" cy="590" r="2" fill="#fff"/>
+      </g>
+      <path d="M200 580 q10 -6 20 -2 M244 578 q10 -4 20 2" fill="none" stroke="#4A3326" stroke-width="3" stroke-linecap="round"/>
+      <path id="mouthSmile" d="M220 616 q12 10 24 0" fill="none" stroke="#9A5A44" stroke-width="3.5" stroke-linecap="round"/>
+      <path id="mouthOpen" d="M214 612 q18 26 36 0Z" fill="#8A3F38" opacity="0"/>
+    </g>
+    <!-- dog -->
+    <g id="dog">
+      <g id="tail" transform="rotate(0 568 506)">
+        <path d="M572 506 C540 492 534 456 560 438" fill="none" stroke="#C99A62" stroke-width="17" stroke-linecap="round"/>
+      </g>
+      <ellipse id="dBody" cx="656" cy="514" rx="90" ry="42" fill="#E0B987"/>
+      <ellipse cx="718" cy="528" rx="34" ry="24" fill="#F0D6AE"/>
+      <ellipse cx="776" cy="552" rx="28" ry="12" fill="#E0B987"/>
+      <ellipse cx="750" cy="512" rx="42" ry="37" fill="#E0B987"/>
+      <ellipse cx="784" cy="524" rx="24" ry="17" fill="#F0D6AE"/>
+      <ellipse cx="804" cy="517" rx="7.5" ry="5.5" fill="#3A2A20"/>
+      <path d="M722 492 L728 540" stroke="#2D4739" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="728" cy="546" r="6" fill="#8C6249"/>
+      <path id="dEyeC" d="M752 505 q8 7 16 0" fill="none" stroke="#3A2A20" stroke-width="3.2" stroke-linecap="round"/>
+      <g id="dEyeO" opacity="0"><circle cx="760" cy="504" r="5.5" fill="#3A2A20"/><circle cx="762" cy="502" r="1.8" fill="#fff"/></g>
+      <g id="dEar" transform="rotate(0 738 490)">
+        <path d="M738 488 C712 478 704 528 726 544 C742 538 748 506 744 492Z" fill="#B98A55"/>
+      </g>
+    </g>
+    <!-- near arm + phone -->
+    <g id="phoneG" transform="translate(448,596)">
+      <g id="buzzWaves" fill="none" stroke="#8C6249" stroke-width="4">
+        <circle id="w1" cx="0" cy="-8" r="30" opacity="0"/><circle id="w2" cx="0" cy="-8" r="30" opacity="0"/><circle id="w3" cx="0" cy="-8" r="30" opacity="0"/>
+      </g>
+      <g id="phoneBody" transform="rotate(14)">
+        <rect x="-22" y="-44" width="44" height="76" rx="9" fill="#2C362A"/>
+        <rect id="phScr" x="-17" y="-38" width="34" height="62" rx="5" fill="#40504a"/>
+      </g>
+    </g>
+    <path d="M298 606 L352 630 L432 612" fill="none" stroke="#E2AE8A" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M296 604 L336 622" fill="none" stroke="#FDFBF7" stroke-width="34" stroke-linecap="round"/>
+    <circle cx="436" cy="606" r="14" fill="#E2AE8A"/>
+    <!-- sparks + yes bubble -->
+    <g id="sparks" fill="#C79B3F"></g>
+    <g id="yes" transform="translate(470,360) scale(0)">
+      <path d="M-120 -20 C-132 -80 -50 -108 10 -96 C80 -108 140 -70 124 -10 C146 40 92 78 36 66 C0 98 -60 84 -66 54 C-112 56 -140 20 -120 -20Z" fill="#8C6249"/>
+      <text x="0" y="22" text-anchor="middle" direction="rtl" style="unicode-bidi:plaintext" font-family="AsL,AsH" font-weight="800" font-size="84" fill="#FDFBF7">יש!</text>
+    </g>
+  </g>
+
+</svg>
+</div>
+
+<div id="divider"></div>
+<div id="chipL" class="as">המאמנת</div>
+<div id="chipR" class="as">הלקוחה</div>
+
+<!-- phone UI -->
+<div id="phone"><div id="screen">
+  <div id="notch"></div>
+  <div id="hdr"><div class="mk emb"></div><b>סטודיו נועה</b><small>זימון אונליין</small></div>
+  <div id="prog"><i><u></u></i><i><u></u></i><i><u></u></i></div>
+  <div id="steps">
+
+    <div class="step" id="s1">
+      <h1>קביעת תור</h1><div class="sub">בחרי שירות</div>
+      <div style="height:6px"></div>
+      <div class="card" id="svc0"><div class="ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8C6249" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="2.4"/><path d="M12 8v6M6 11h12M9 21l3-7 3 7"/></svg></div><div><div class="tt">אימון אישי</div><div class="ss">55 דק׳ · ₪180</div></div><div class="rd"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div></div>
+      <div class="card" id="svc1"><div class="ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8C6249" stroke-width="2" stroke-linecap="round"><path d="M12 21C6 17 5 11 12 5c7 6 6 12 0 16z"/><path d="M12 8v13"/></svg></div><div><div class="tt">פילאטיס מכשירים</div><div class="ss">50 דק׳ · ₪160</div></div><div class="rd"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div></div>
+      <div class="card" id="svc2"><div class="ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8C6249" stroke-width="2" stroke-linecap="round"><path d="M4 6h16v10H9l-5 4z"/></svg></div><div><div class="tt">שיחת היכרות</div><div class="ss">20 דק׳ · ללא עלות</div></div><div class="rd"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div></div>
+      <div class="btn" id="btn1">המשך</div>
+    </div>
+
+    <div class="step" id="s2">
+      <h1>בחרי מועד</h1><div class="sub">אימון אישי · 55 דק׳</div>
+      <div class="lbl" style="margin-top:20px">אוקטובר 2026</div>
+      <div class="days">
+        <div class="day"><span>א׳</span><b>4</b></div><div class="day"><span>ב׳</span><b>5</b></div><div class="day"><span>ג׳</span><b>6</b></div>
+        <div class="day off"><span>ד׳</span><b>7</b></div><div class="day" id="day4"><span>ה׳</span><b>8</b></div><div class="day off"><span>ו׳</span><b>9</b></div>
+      </div>
+      <div class="lbl">שעות פנויות</div>
+      <div class="times">
+        <div class="tm">09:00</div><div class="tm">10:30</div><div class="tm">12:00</div>
+        <div class="tm">16:00</div><div class="tm" id="tm4">17:30</div><div class="tm">19:00</div>
+      </div>
+      <div class="note"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8C6249" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17V11a6 6 0 1112 0v6l1.5 2h-15z"/><path d="M10 21h4"/></svg>תזכורת תגיע יום לפני</div>
+      <div class="btn" id="btn2">המשך לתשלום</div>
+    </div>
+
+    <div class="step" id="s3">
+      <h1>סיכום ותשלום</h1><div class="sub">עוד רגע ואת רשומה</div>
+      <div class="sum">
+        <div class="r"><span>שירות</span><b>אימון אישי</b></div>
+        <div class="r"><span>מועד</span><b>יום ה׳, 8 באוקטובר</b></div>
+        <div class="r"><span>שעה</span><b>17:30 · 55 דק׳</b></div>
+        <hr>
+        <div class="r tot"><span>סה״כ לתשלום</span><b>₪180</b></div>
+      </div>
+      <div class="lbl" style="margin-top:20px">אמצעי תשלום</div>
+      <div class="pay sel"><div class="bd">ביט</div>תשלום בביט<div class="rd"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div></div>
+      <div class="pay"><div class="bd"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2D4739" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10h18"/></svg></div>כרטיס אשראי<div class="rd"></div></div>
+      <div class="btn on" id="payBtn"><span id="payLbl">שלמי בביט · ₪180</span><span class="spin" id="spin" style="display:none"></span></div>
+    </div>
+
+    <div class="step" id="s4">
+      <div id="okc"><svg width="76" height="76" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path id="okp" d="M5.5 12.8l4.2 4.2L18.8 7.4" stroke-dasharray="20" stroke-dashoffset="20"/></svg></div>
+      <h1>נקבע!</h1>
+      <div class="sub">שלחנו אישור, ותזכורת תגיע<br>יום לפני.</div>
+      <div class="sum">
+        <div class="r"><span>אימון אישי</span><b>יום ה׳ · 17:30</b></div>
+        <hr>
+        <div class="r"><span>שולם בביט</span><b style="color:#2D4739">₪180 ✓</b></div>
+      </div>
+      <div class="btn ghost">הוסיפי ליומן</div>
+    </div>
+
+  </div>
+</div></div>
+
+<!-- notification on coach side -->
+<div id="notif">
+  <div class="ok"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+  <div class="ic"><div class="mk emb"></div></div>
+  <div class="tx">
+    <div class="top"><span>Holisticlick</span><span>עכשיו</span></div>
+    <div class="ti">נקבע תור חדש + שולם בביט</div>
+    <div class="su">אימון אישי · יום ה׳ 17:30 · ₪180</div>
+  </div>
+</div>
+
+<div class="cap" id="capL"><div></div></div>
+<div class="cap" id="capR"><div></div></div>
+
+<div id="end">
+  <div class="mk emb" id="eEmb"></div>
+  <div class="mk wrd" id="eWrd"></div>
+  <div class="tag" id="eTag">הקליניקה שלך, ברוגע ובעוצמה.</div>
+  <div class="sm" id="eSm">זימון עצמי · תשלום · תזכורות</div>
+</div>
+<div id="fade"></div>
+</div>
+
+<script>
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const sg=(t,a,b)=>cl((t-a)/(b-a));
+const eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const eo=x=>1-Math.pow(1-x,3);
+const eob=x=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const lerp=(a,b,x)=>a+(b-a)*x;
+const $=s=>document.querySelector(s);
+const bump=(t,a,b,c)=>Math.sin(Math.PI*sg(t,a,c)); // quick press shape
+
+/* ---- timeline ---- */
+const TAPS=[ {t:2.0,sel:'#svc0'},{t:3.0,sel:'#btn1'},{t:4.2,sel:'#day4'},{t:5.0,sel:'#tm4'},{t:5.9,sel:'#btn2'},{t:7.7,sel:'#payBtn'} ];
+const T1=3.1,T2=6.0,T3=8.55,TD=.45;           // step transitions
+const T_OK=8.9;                                // success shown to client
+const T_NOTIF=9.25, T_NOTIF_OUT=12.35, T_NOTIF_HIDE=10.7; const SC=.86;         // notification on coach side
+const T_YES=10.05, T_YES_END=12.3;             // fist pump
+const T_END=13.15;
+
+const screen=$('#screen');
+const steps=[$('#s1'),$('#s2'),$('#s3'),$('#s4')];
+const ripples=[];
+function initTaps(){
+  steps.forEach(s=>{s.style.opacity=1;s.style.transform='none'});
+  const sr=screen.getBoundingClientRect();
+  TAPS.forEach(tp=>{
+    const e=$(tp.sel); const r=e.getBoundingClientRect();
+    tp.el=e; tp.x=(r.left-sr.left+r.width/2)/SC; tp.y=(r.top-sr.top+r.height/2)/SC;
+    const d=document.createElement('div'); d.className='rip'; screen.appendChild(d); ripples.push(d);
+  });
+}
+
+/* sparks */
+const sparksG=$('#sparks'); const SP=[];
+for(let i=0;i<10;i++){const u=document.createElementNS('http://www.w3.org/2000/svg','use');u.setAttribute('href','#star');u.setAttribute('width',20);u.setAttribute('height',20);u.setAttribute('x',-10);u.setAttribute('y',-10);sparksG.appendChild(u);SP.push({u,a:i/10*Math.PI*2+.3,d:70+((i*37)%50),s:.7+((i*13)%7)/10});}
+
+function stepVis(t){
+  const w=[ [ -1, T1 ], [ T1, T2 ], [ T2, T3 ], [ T3, 99 ] ];
+  steps.forEach((s,i)=>{
+    const [a,b]=w[i];
+    const inn = i===0 ? sg(t,.25,.7) : eo(sg(t,a,a+TD));
+    const out = i===3 ? 0 : eo(sg(t,b,b+TD));
+    const op = Math.min(inn,1-out);
+    const x = (1-inn)*(i===0?0:-90) + out*90;
+    s.style.opacity=op; s.style.transform=`translateX(${x}px)`;
+    s.style.pointerEvents='none';
+  });
+}
+
+function caps(el,list,t){
+  const d=el.firstElementChild; let it=null;
+  for(const c of list) if(t>=c[0]&&t<c[1]){it=c;break}
+  if(!it){d.style.opacity=0;return}
+  if(d.textContent!==it[2]) d.textContent=it[2];
+  const o=Math.min(sg(t,it[0],it[0]+.25), 1-sg(t,it[1]-.2,it[1]));
+  d.style.opacity=o; d.style.transform=`translateY(${(1-o)*10}px)`;
+}
+
+function setT(t){
+  document.getElementById('fade').style.opacity = 1-eo(sg(t,0,.55)) ;
+
+  /* ============ RIGHT: UI ============ */
+  stepVis(t);
+  // selection states
+  $('#svc0').classList.toggle('sel',t>=2.0);
+  $('#btn1').classList.toggle('on',t>=2.05);
+  $('#day4').classList.toggle('sel',t>=4.2);
+  $('#tm4').classList.toggle('sel',t>=5.0);
+  $('#btn2').classList.toggle('on',t>=5.05);
+  // progress
+  const pu=document.querySelectorAll('#prog u');
+  pu[0].style.transform=`scaleX(${t<T1?lerp(.15,.6,sg(t,.4,2.0))+ (t>=2.0?.4*eo(sg(t,2.0,3.0)):0) : 1})`;
+  pu[1].style.transform=`scaleX(${t<T1?0:(t<T2? lerp(.1,.55,sg(t,T1,5.0))+(t>=5.0?.45*eo(sg(t,5.0,5.9)):0) :1)})`;
+  pu[2].style.transform=`scaleX(${t<T2?0:(t<T3? lerp(.1,.7,sg(t,T2,7.7)) :1)})`;
+  // press + ripples + thumb
+  let thumbDy=0;
+  TAPS.forEach((tp,i)=>{
+    const b=Math.sin(Math.PI*sg(t,tp.t-.09,tp.t+.14));
+    if(tp.sel.startsWith('#svc')||tp.sel.startsWith('#btn')||tp.sel==='#payBtn') tp.el.style.transform=`scale(${1-.045*b})`;
+    const p=sg(t,tp.t,tp.t+.55), r=ripples[i];
+    r.style.opacity=p>0&&p<1?(1-p)*.9:0;
+    const rad=14+54*eo(p); r.style.width=r.style.height=rad*2+'px';
+    r.style.left=(tp.x-rad)+'px'; r.style.top=(tp.y-rad)+'px';
+    thumbDy=Math.max(thumbDy,b);
+  });
+  // pay spinner / label
+  const paying=t>=7.7&&t<8.55;
+  $('#payLbl').style.display=paying?'none':'inline';
+  $('#spin').style.display=paying?'block':'none';
+  $('#spin').style.transform=`rotate(${(t-7.7)*720}deg)`;
+  // success check
+  $('#okp').style.strokeDashoffset=20*(1-eo(sg(t,T_OK-.1,T_OK+.45)));
+  const ringP=sg(t,T_OK,T_OK+.9); screen.style.setProperty('--ring',ringP>0&&ringP<1?.6*(1-ringP):0); screen.style.setProperty('--ringS',1+.5*eo(ringP));
+  const ok=$('#okc'); ok.style.transform=`scale(${t<T3+.15?0.001:eob(sg(t,T3+.1,T3+.6))})`;
+
+  /* ============ RIGHT: client ============ */
+  const cb=Math.sin(t*2*Math.PI/3.4);
+  $('#cTorso').setAttribute('transform',`translate(0,858) scale(1,${1+.012*cb}) translate(0,-858)`);
+  const happy=t>=T_OK;
+  const hop = happy? Math.sin(Math.PI*sg(t,T_OK,T_OK+.6))*12 : 0;
+  $('#cHead').setAttribute('transform',`translate(${happy?0:-2},${(happy?-hop:1.5+cb)}) rotate(${happy?-4:-3} 1130 640)`);
+  $('#pony').setAttribute('transform',`rotate(${6*Math.sin(t*2.2)+(happy?10*Math.sin(Math.PI*sg(t,T_OK,T_OK+1.2)):0)} 1166 570)`);
+  $('#cEyes').style.opacity=happy?0:1; $('#cEyesH').style.opacity=happy?1:0;
+  $('#cSmile').style.opacity=happy?0:1; $('#cSmileB').style.opacity=happy?1:0;
+  $('#cEyes').setAttribute('transform',`translate(${-2*Math.sin(t*.9)},${(t<T_OK?2.5:0)})`);
+  $('#thumb').setAttribute('transform',`rotate(20 1112 758) translate(0,${-thumbDy*-7}) `);
+  $('#cScr').setAttribute('opacity',0);
+  $('#cBadge').setAttribute('transform',`translate(1130,${500-6*Math.sin(t*3)}) scale(${eob(sg(t,T_OK+.1,T_OK+.55))*(1-sg(t,13.0,13.3))})`);
+
+  /* ============ LEFT: coach ============ */
+  const lb=Math.sin(t*2*Math.PI/3.8);
+  $('#torso').setAttribute('transform',`translate(0,642) scale(1,${1+.03*lb}) translate(0,-642)`);
+  $('#phoneG').setAttribute('transform',`translate(448,${596-2.2*lb})`);
+  // buzz
+  const bz=t>=T_NOTIF&&t<T_NOTIF+.7;
+  const jit=bz?Math.sin(t*140)*2.4:0;
+  $('#phoneBody').setAttribute('transform',`translate(${jit},0) rotate(${14+(bz?Math.sin(t*120)*3:0)})`);
+  const glow=sg(t,T_NOTIF-.02,T_NOTIF+.15)*(1-sg(t,T_NOTIF_OUT,T_NOTIF_OUT+.4));
+  $('#phScr').setAttribute('fill', glow>0? `rgb(${Math.round(lerp(64,253,glow))},${Math.round(lerp(80,246,glow))},${Math.round(lerp(74,226,glow))})`:'#40504a');
+  ['w1','w2','w3'].forEach((id,i)=>{
+    const p=sg(t,T_NOTIF+i*.14,T_NOTIF+i*.14+.7);
+    const e=$('#'+id); e.setAttribute('r',30+70*eo(p)); e.setAttribute('opacity',p>0&&p<1?.55*(1-p):0);
+  });
+  // alert / eyes
+  const aware=t>=T_NOTIF+.15&&t<T_NOTIF_OUT+.2;
+  const yesA=t>=T_YES&&t<T_YES_END+.2;
+  $('#eyesRelax').style.opacity=(aware||yesA)?0:1;
+  $('#eyesOpen').style.opacity=(aware&&!yesA)?1:0;
+  $('#eyesHappy').style.opacity=yesA?1:0;
+  $('#mouthSmile').style.opacity=yesA?0:1; $('#mouthOpen').style.opacity=yesA?1:0;
+  // head lift when she hears the phone
+  const lift=sg(t,T_NOTIF+.15,T_NOTIF+.55)*(1-sg(t,T_YES_END,T_YES_END+.7));
+  $('#head').setAttribute('transform',`translate(${3*lift},${-5*lift}) rotate(${-6+ (yesA?-3*Math.sin((t-T_YES)*9):0)-2*lift} 232 596)`);
+
+  // fist pump
+  const rest=[10,0];
+  let a1=10,a2=0;
+  if(t>=T_YES-.25){
+    const up=eio(sg(t,T_YES-.25,T_YES+.28));
+    const down=eio(sg(t,T_YES_END-.35,T_YES_END+.45));
+    const k=up*(1-down);
+    const pumps=(t>T_YES+.28&&t<T_YES_END-.3)?Math.sin((t-T_YES-.28)*13)*10*(1-sg(t,T_YES_END-.9,T_YES_END-.3)):0;
+    a1=lerp(10,-52,k)+pumps*.4; a2=lerp(0,-52,k)+pumps;
+    if(t<T_YES+.05) { a1+=lerp(0,14,sg(t,T_YES-.25,T_YES)) *(1-sg(t,T_YES,T_YES+.05)); }
+  }
+  $('#upper').setAttribute('transform',`rotate(${a1})`);
+  $('#fore').setAttribute('transform',`translate(74,0) rotate(${a2})`);
+
+  // dog
+  const dAlert=t>=T_NOTIF+.1&&t<T_NOTIF_OUT+.3;
+  const dj=(t>T_YES+.1&&t<T_YES+.9)?Math.abs(Math.sin(Math.PI*sg(t,T_YES+.1,T_YES+.9)))*34:0;
+  const dj2=(t>T_YES+.9&&t<T_YES+1.5)?Math.sin(Math.PI*sg(t,T_YES+.9,T_YES+1.5))*12:0;
+  $('#dog').setAttribute('transform',`translate(-52,${-(dj+dj2)+ (t<T_NOTIF? -1.2*lb :0)})`);
+  $('#dEyeC').style.opacity=dAlert?0:1; $('#dEyeO').style.opacity=dAlert?1:0;
+  const earA=dAlert? -28*sg(t,T_NOTIF+.1,T_NOTIF+.35) : 0;
+  $('#dEar').setAttribute('transform',`rotate(${earA} 738 490)`);
+  const tailAmp=dAlert?24:4, tailF=dAlert?15:2.2;
+  $('#tail').setAttribute('transform',`rotate(${tailAmp*Math.sin(t*tailF)} 568 506)`);
+
+  // steam
+  ['st1','st2'].forEach((id,i)=>{const e=$('#'+id);const p=((t*.45+i*.5)%1);e.setAttribute('opacity',.7*Math.sin(Math.PI*p));e.setAttribute('transform',`translate(${4*Math.sin(t*2+i)},${-14*p})`)});
+
+  // sparks + yes bubble
+  const sp=sg(t,T_YES+.1,T_YES+.95);
+  SP.forEach(s=>{const d=s.d*eo(sp), fx=330+Math.cos(s.a)*d, fy=470+Math.sin(s.a)*d*.9; s.u.setAttribute('transform',`translate(${fx},${fy}) scale(${(sp>0&&sp<1?s.s*(1-sp*.4)*(sp<.15?sp/.15:1):0)}) rotate(${sp*90})`);});
+  const yb=eob(sg(t,T_YES+.1,T_YES+.5))*(1-eo(sg(t,T_YES_END-.4,T_YES_END+.1)));
+  $('#yes').setAttribute('transform',`translate(480,385) scale(${yb*(1+.04*Math.sin(t*14))}) rotate(-6)`);
+
+  // notification
+  const nIn=eob(sg(t,T_NOTIF,T_NOTIF+.45)), nOut=eio(sg(t,T_NOTIF_HIDE,T_NOTIF_HIDE+.35));
+  const n=$('#notif'); n.style.opacity=t>=T_NOTIF&&t<T_NOTIF_HIDE+.4?Math.min(1,sg(t,T_NOTIF,T_NOTIF+.12))*(1-nOut):0;
+  n.style.transform=`translateY(${-80*(1-nIn)-50*nOut}px) scale(${.92+.08*nIn})`;
+
+  // captions
+  caps($('#capR'),[[.5,3.1,'בוחרת שירות'],[3.1,6.0,'בוחרת מועד'],[6.0,8.6,'משלמת בביט'],[8.6,13.0,'קבעה ושילמה — בלי להתקשר']],t);
+  caps($('#capL'),[[.5,9.25,'בבית, על הספה'],[9.25,10.05,'התראה חדשה'],[10.05,12.3,'יש!'],[12.3,13.0,'וחוזרת לנוח']],t);
+
+  // end card
+  const e=sg(t,T_END,T_END+.55);
+  $('#end').style.opacity=eo(e);
+  $('#eEmb').style.transform=`scale(${.85+.15*eob(sg(t,T_END+.05,T_END+.7))})`;
+  $('#eWrd').style.opacity=eo(sg(t,T_END+.25,T_END+.75));
+  $('#eTag').style.opacity=eo(sg(t,T_END+.5,T_END+1.0)); $('#eTag').style.transform=`translateY(${(1-eo(sg(t,T_END+.5,T_END+1.0)))*14}px)`;
+  $('#eSm').style.opacity=eo(sg(t,T_END+.8,T_END+1.3));
+}
+window.setT=setT;
+window.ready=document.fonts.ready.then(()=>{initTaps();setT(0);return true});
+</script>
+</body>
+</html>
