@@ -678,7 +678,7 @@ ul.gl a{color:var(--earth-d);text-decoration:underline;text-underline-offset:3px
 <label class="tick wide"><input type="checkbox" id="cl-red" checked> הסתרת טלפונים, אימיילים ומספרים ארוכים</label>
 </div>
 <div class="row" style="margin-top:6px"><button class="btn studio" id="cl-local" type="button">סיכום מיידי</button><button class="btn ghost" id="cl-ai" type="button" hidden>סיכום ומשוב מ־Claude</button><button class="btn ghost" id="cl-stop" type="button" hidden>עצירה</button><button class="btn ghost" id="cl-save" type="button">שמירה ביומן</button><button class="btn ghost" id="cl-clear" type="button">שיחה חדשה</button></div>
-<p class="fine" id="cl-status" role="status" aria-live="polite"></p></div>
+<p class="fine">כל סיכום נשמר אוטומטית ביומן השיחות. שינויים בהערות, בתאריך ובתוצאה נשמרים לבד, וגם מה שהוקלד נשמר כטיוטה אם יוצאים מהדף באמצע.</p><p class="fine" id="cl-status" role="status" aria-live="polite"></p></div>
 <div style="display:flex;flex-direction:column;gap:var(--gap);min-width:0"><div class="pf" id="cl-res" aria-live="polite"></div>
 <div class="chart"><div><h3>ההתנגדויות שחוזרות בשיחות</h3><p class="cap">מכל השיחות שנשמרו ביומן.</p></div><div id="cl-ch" class="tf"></div></div></div></div>
 <div class="card soft"><h3>יומן השיחות</h3><div id="cl-list" class="cl"></div></div>
@@ -2060,7 +2060,8 @@ ul.gl a{color:var(--earth-d);text-decoration:underline;text-underline-offset:3px
   var OBX={1:/אין לי זמן|עמוסה|אין לי כוח ללמוד|אין לי פנאי/,2:/משוב|לדווח|עוד עבודה/,3:/להעביר|ייבוא|היסטוריה|ארכיון/,4:/פרטיות|מידע רגיש|סודיות|אבטחה/,5:/תיעלמו|לא מכירה אתכן|מי אתן|חברה חדשה/,
     6:/למה בחינם|קאץ|מה אתן מרוויחות|איפה התפיסה/,7:/אחרי שלושה חודשים|כמה זה עולה|כמה יעלה|מחיר|עמלות/,8:/וואטסאפ|יומן גוגל|מסתדרת עם|אקסל|מחברת/,9:/יש לי כבר מערכת|אני משתמשת ב/,
     10:/קשר אישי|טכנולוגיה|קר מדי|אנושי/,11:/רק מתחילה|אין לי מספיק מטופלות|אין לי הרבה לקוחות/,12:/באגים|תקלות|לא גמור|בשלב מוקדם/,13:/ספאם|לא עונה להודעות/,14:/תשלחי לי|אחשוב ואחזור|תשלחי קישור/,15:/לא עכשיו|בעוד חודש|תחזרי אליי|אחרי החגים|חופשה/};
-  var calls=[],dbC=null,sampleFn=null,ctl=null,audioURL=null,audioEl=null,res=null,viewing=null;
+  var calls=[],dbC=null,sampleFn=null,ctl=null,audioURL=null,audioEl=null,res=null,viewing=null,curId=null,txStale=false,commitT=null,draftT=null,chain={};
+  var DRAFT='holisticlick-call-draft-v1';
 
   function $(id){return document.getElementById(id)}
   function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
@@ -2248,7 +2249,7 @@ ul.gl a{color:var(--earth-d);text-decoration:underline;text-underline-offset:3px
       if(!a||typeof a!=='object')throw {code:'invalid_json'};
       var sc=Math.max(0,Math.min(100,Math.round(+a.score||0)));
       a.score=sc;res=res||{};res.ai=a;if(!res.local)res.local=analyzeLocal(f.tx,$('cl-me').value);
-      res.dur=f.dur;renderResult(res);stat('הסיכום מוכן. אפשר לשמור אותו ביומן.');
+      res.dur=f.dur;txStale=false;renderResult(res);commit(false);stat('הסיכום של Claude מוכן, ונשמר ביומן השיחות.');
     }).catch(function(e){
       var k=e&&e.code,m={cancelled:'',rate_limited:'יותר מדי בקשות בזמן קצר. אפשר לנסות שוב בעוד רגע, או להשתמש בסיכום המיידי.',invalid_json:'Claude לא החזיר מבנה שאפשר לקרוא. אפשר לנסות שוב, או להשתמש בסיכום המיידי.',session_expired:'צריך להתחבר מחדש כדי להשתמש ב־Claude.',refused:'Claude לא ניתח את התמלול הזה. אפשר לנסות את הסיכום המיידי.',prompt_too_large:'התמלול ארוך מדי. אפשר לקצר אותו או לפצל לשני חלקים.'};
       if(k==='not_granted'||k==='sampling_disabled'||k==='not_declared'||k==='capability_disabled'||k==='capability_removed'){$('cl-ai').hidden=true;stat('הסיכום עם Claude לא זמין בתצוגה הזאת. הסיכום המיידי ממשיך לעבוד.');return}
@@ -2261,26 +2262,61 @@ ul.gl a{color:var(--earth-d);text-decoration:underline;text-underline-offset:3px
     var tx=String($('cl-tx').value||'');if($('cl-red').checked)tx=redact(tx);
     return {acct:trim($('cl-acct').value).replace(/^@+/,'').slice(0,60),date:$('cl-date').value||today(),dur:parseInt($('cl-dur').value,10)||0,out:$('cl-out').value,notes:String($('cl-notes').value||'').slice(0,2000),tx:tx.trim().slice(0,MAXTX)};
   }
-  function runLocal(){
-    var f=readForm();if(!f.tx){stat('כדי לקבל סיכום צריך תמלול. אפשר להדביק או להעלות קובץ תמלול.');return}
+  function runLocalCore(f){
     var sp=speakers(f.tx),me=$('cl-me');
     me.textContent='';sp.labels.forEach(function(k){var o=el('option',null,k);o.value=k;me.appendChild(o)});
     $('cl-mewrap').hidden=!(sp.labels.length>=2);
     var an=analyzeLocal(f.tx,null);
     if(an.labeled)me.value=an.me;
-    res={local:an,ai:null,dur:f.dur};renderResult(res);stat('הסיכום המיידי מוכן. אפשר לשמור אותו ביומן, או לבקש גם ניתוח מ־Claude.');
+    res={local:an,ai:null,dur:f.dur};renderResult(res);
   }
-  function save(){
-    var f=readForm();if(!f.tx&&!f.notes){stat('אין מה לשמור. כדאי להוסיף תמלול או הערות.');return}
-    if(!res&&f.tx){runLocal()}
-    var L=res&&res.local,A=res&&res.ai,objs=[];
-    if(L)L.objs.forEach(function(o){if(objs.indexOf(o.n)<0)objs.push(o.n)});
-    if(A&&Array.isArray(A.objections))A.objections.forEach(function(o){if(o&&o.n>=1&&o.n<=15&&objs.indexOf(o.n)<0)objs.push(o.n)});
-    var c={id:uid(),ts:Date.now(),date:f.date,acct:f.acct,dur:f.dur,out:f.out,notes:f.notes,tx:f.tx,objs:objs,
-      local:L?{words:L.words,ratio:L.ratio,checks:L.checks,score:L.score,labeled:L.labeled,me:L.me,issues:L.issues,objs:L.objs.slice(0,8)}:null,
-      ai:A?trimAI(A):null};
-    calls.unshift(c);if(calls.length>MAXCALLS)calls=calls.slice(0,MAXCALLS);
-    persistCall(c);renderList();renderAgg();stat('השיחה נשמרה ביומן.');
+  function runLocal(){
+    var f=readForm();if(!f.tx){stat('כדי לקבל סיכום צריך תמלול. אפשר להדביק או להעלות קובץ תמלול.');return}
+    runLocalCore(f);txStale=false;commit(false);
+    stat('הסיכום המיידי מוכן, ונשמר ביומן השיחות. אפשר לבקש גם ניתוח מ־Claude.');
+  }
+  function commit(manual){
+    var f=readForm();
+    if(!f.tx&&!f.notes){if(manual)stat('אין מה לשמור. כדאי להוסיף תמלול או הערות.');return}
+    var existing=null;if(curId)calls.forEach(function(x){if(x.id===curId)existing=x});
+    var analysis=true;
+    if(txStale){if(manual&&f.tx){runLocalCore(f);txStale=false}else analysis=false}
+    if(!analysis&&!existing)return;
+    if(!res&&f.tx&&analysis)runLocalCore(f);
+    var c=existing||{id:uid(),ts:Date.now()};
+    c.acct=f.acct;c.date=f.date;c.dur=f.dur;c.out=f.out;c.notes=f.notes;
+    if(analysis){
+      var L=res&&res.local,A=res&&res.ai,objs=[];
+      if(L)L.objs.forEach(function(o){if(objs.indexOf(o.n)<0)objs.push(o.n)});
+      if(A&&Array.isArray(A.objections))A.objections.forEach(function(o){if(o&&o.n>=1&&o.n<=15&&objs.indexOf(o.n)<0)objs.push(o.n)});
+      c.tx=f.tx;c.objs=objs;
+      c.local=L?{words:L.words,ratio:L.ratio,checks:L.checks,score:L.score,labeled:L.labeled,me:L.me,issues:L.issues,objs:L.objs.slice(0,8)}:null;
+      c.ai=A?trimAI(A):null;
+    }
+    if(!existing){calls.unshift(c);curId=c.id;if(calls.length>MAXCALLS)calls=calls.slice(0,MAXCALLS)}
+    persistCall(c);renderList();renderAgg();saveDraft();
+    if(manual)stat('השיחה נשמרה ביומן.');
+  }
+  function scheduleCommit(){if(!curId)return;clearTimeout(commitT);commitT=setTimeout(function(){commit(false)},800)}
+  function saveDraft(){
+    clearTimeout(draftT);
+    draftT=setTimeout(function(){
+      try{var f={id:curId,acct:$('cl-acct').value,date:$('cl-date').value,dur:$('cl-dur').value,out:$('cl-out').value,notes:$('cl-notes').value,tx:$('cl-tx').value};
+        if(!f.acct&&!f.notes&&!f.tx&&!curId)localStorage.removeItem(DRAFT);else localStorage.setItem(DRAFT,JSON.stringify(f))}catch(e){}
+    },400);
+  }
+  function restoreDraft(){
+    try{
+      var raw=localStorage.getItem(DRAFT);if(!raw)return;var d=JSON.parse(raw);if(!d)return;
+      $('cl-acct').value=d.acct||'';$('cl-date').value=d.date||today();$('cl-dur').value=d.dur||'';$('cl-out').value=d.out||'unknown';$('cl-notes').value=d.notes||'';$('cl-tx').value=d.tx||'';
+      var found=null;if(d.id)calls.forEach(function(x){if(x.id===d.id)found=x});
+      if(found){curId=found.id;showSaved(found)}else if(d.id){draftId=d.id}
+    }catch(e){}
+  }
+  var draftId=null;
+  function showSaved(c){
+    res={local:c.local?{labeled:c.local.labeled,me:c.local.me,words:c.local.words,wm:0,ratio:c.local.ratio,checks:c.local.checks,score:c.local.score,issues:c.local.issues||[],objs:c.local.objs||[],labels:[]}:null,ai:c.ai,dur:c.dur};
+    renderResult(res);
   }
   function trimAI(a){
     function arr(x,n,l){return Array.isArray(x)?x.slice(0,n).map(function(s){return String(s).slice(0,l)}):[]}
@@ -2291,7 +2327,8 @@ ul.gl a{color:var(--earth-d);text-decoration:underline;text-underline-offset:3px
   }
   function clearForm(){
     ['cl-acct','cl-dur','cl-notes','cl-tx'].forEach(function(i){$(i).value=''});$('cl-date').value=today();$('cl-out').value='unknown';
-    $('cl-res').textContent='';res=null;$('cl-mewrap').hidden=true;stat('');$('cl-tname').textContent='';
+    $('cl-res').textContent='';res=null;curId=null;txStale=false;draftId=null;$('cl-mewrap').hidden=true;stat('');$('cl-tname').textContent='';
+    try{localStorage.removeItem(DRAFT)}catch(e){}
   }
 
   /* ---------- storage ---------- */
@@ -2300,7 +2337,8 @@ ul.gl a{color:var(--earth-d);text-decoration:underline;text-underline-offset:3px
   function persistCall(c){
     persistLocal();
     if(!dbC){setSave('local');return}
-    dbC.doc(c.id).set(JSON.parse(JSON.stringify(c))).then(function(){setSave('db')},function(){setSave('local')});
+    var snap=JSON.parse(JSON.stringify(c));
+    chain[c.id]=(chain[c.id]||Promise.resolve()).then(function(){return dbC.doc(c.id).set(snap)}).then(function(){setSave('db')},function(){setSave('local')});
   }
   function removeCall(c){
     calls=calls.filter(function(x){return x!==c});persistLocal();
@@ -2334,8 +2372,8 @@ ul.gl a{color:var(--earth-d);text-decoration:underline;text-underline-offset:3px
   }
   function openCall(c){
     $('cl-acct').value=c.acct;$('cl-date').value=c.date;$('cl-dur').value=c.dur||'';$('cl-out').value=c.out||'unknown';$('cl-notes').value=c.notes||'';$('cl-tx').value=c.tx||'';
-    res={local:c.local?{labeled:c.local.labeled,me:c.local.me,words:c.local.words,wm:0,ratio:c.local.ratio,checks:c.local.checks,score:c.local.score,issues:c.local.issues||[],objs:c.local.objs||[],labels:[]}:null,ai:c.ai,dur:c.dur};
-    renderResult(res);$('cl-res').scrollIntoView({behavior:'smooth',block:'start'});stat('שיחה שמורה נפתחה. אפשר לערוך ולשמור כשיחה חדשה.');
+    curId=c.id;txStale=false;showSaved(c);saveDraft();
+    $('cl-res').scrollIntoView({behavior:'smooth',block:'start'});stat('שיחה שמורה נפתחה. שינויים בהערות ובתוצאה נשמרים אוטומטית, ואפשר להריץ סיכום מחדש.');
   }
   function renderAgg(){
     var t=$('cl-tiles');t.textContent='';
@@ -2411,7 +2449,7 @@ ul.gl a{color:var(--earth-d);text-decoration:underline;text-underline-offset:3px
     });
   }
   function setTranscript(name,txt){
-    $('cl-tx').value=txt.slice(0,MAXTX*2);$('cl-tname').textContent=name;
+    $('cl-tx').value=txt.slice(0,MAXTX*2);$('cl-tname').textContent=name;if(curId)txStale=true;saveDraft();
     stat(txt.length>MAXTX?'התמלול ארוך, נשמר ונשלח רק החלק הראשון ('+MAXTX+' תווים).':'התמלול נטען. אפשר לבקש סיכום.');
   }
   function onTranscriptFile(f){
@@ -2441,7 +2479,7 @@ ul.gl a{color:var(--earth-d);text-decoration:underline;text-underline-offset:3px
     $('cl-local').addEventListener('click',runLocal);
     $('cl-ai').addEventListener('click',runAI);
     $('cl-stop').addEventListener('click',function(){if(ctl)ctl.abort()});
-    $('cl-save').addEventListener('click',save);
+    $('cl-save').addEventListener('click',function(){commit(true)});
     $('cl-clear').addEventListener('click',clearForm);
     $('cl-mark').addEventListener('click',mark);
     $('cl-audio').addEventListener('change',function(){onAudio($('cl-audio').files[0])});
@@ -2451,6 +2489,10 @@ ul.gl a{color:var(--earth-d);text-decoration:underline;text-underline-offset:3px
       var dl=$('cl-handles');dl.textContent='';
       try{(window.HLT&&window.HLT.handles?window.HLT.handles():[]).forEach(function(h){var o=document.createElement('option');o.value=h;dl.appendChild(o)})}catch(e){}
     });
+    ['cl-acct','cl-date','cl-dur','cl-notes'].forEach(function(id){$(id).addEventListener('input',function(){scheduleCommit();saveDraft()})});
+    $('cl-out').addEventListener('change',function(){scheduleCommit();saveDraft()});
+    $('cl-tx').addEventListener('input',function(){if(curId)txStale=true;saveDraft()});
+    restoreDraft();
     $('cl-ai').hidden=true;$('cl-stop').hidden=true;$('cl-mark').hidden=true;
     if(window.claude&&window.claude.use){
       window.claude.use('sample').then(function(fn){if(fn){sampleFn=fn;$('cl-ai').hidden=false}}).catch(function(){});
@@ -2459,7 +2501,7 @@ ul.gl a{color:var(--earth-d);text-decoration:underline;text-underline-offset:3px
         dbC=db.collection('calls');
         return dbC.orderBy('ts','desc').limit(MAXCALLS).get().then(function(snap){
           var arr=[];snap.docs.forEach(function(d){var o=normCall(d.data());if(o)arr.push(o)});
-          if(arr.length){calls=arr;persistLocal();renderList();renderAgg();setSave('db')}
+          if(arr.length){calls=arr;persistLocal();renderList();renderAgg();setSave('db');if(!curId&&draftId){calls.forEach(function(x){if(x.id===draftId){curId=x.id;showSaved(x)}})}}
           else if(calls.length){calls.slice().reverse().forEach(function(c){dbC.doc(c.id).set(JSON.parse(JSON.stringify(c))).catch(function(){})});setSave('db')}
           else setSave('db');
         });
