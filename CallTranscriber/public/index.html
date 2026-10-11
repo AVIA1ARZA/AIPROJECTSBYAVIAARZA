@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מתמלל שיחות</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23B76E79'/%3E%3Cpath d='M9 12v8M14 8v16M19 11v10M24 14v4' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=Noto+Serif+Hebrew:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --rose: #B76E79;
+      --rose-hover: #A35C67;
+      --rose-light: #F5EBEB;
+      --border: #E2D9D9;
+      --ink: #1C1917;
+      --muted: #78716C;
+      --bg: #FAFAFA;
+      --error: #B42318;
+      --error-bg: #FEF3F2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+    main { max-width: 760px; margin: 0 auto; padding: 48px 16px 64px; }
+    h1 {
+      font-family: "Noto Serif Hebrew", "Assistant", serif;
+      font-size: clamp(1.9rem, 5vw, 2.6rem);
+      margin: 0 0 8px;
+      text-align: center;
+    }
+    h1 span { color: var(--rose); }
+    .lead { text-align: center; color: var(--muted); margin: 0 0 32px; }
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+      margin-bottom: 20px;
+    }
+    .banner {
+      background: var(--error-bg);
+      color: var(--error);
+      border: 1px solid #FDA29B;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+    }
+    .dropzone {
+      display: block;
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      padding: 36px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .dropzone:hover, .dropzone:focus-within, .dropzone.drag { border-color: var(--rose); background: var(--rose-light); }
+    .dropzone strong { display: block; font-size: 1.15rem; margin-bottom: 4px; }
+    .dropzone small { color: var(--muted); }
+    .dropzone input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .file-name { margin-top: 12px; font-weight: 600; word-break: break-all; }
+    .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+    .row label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    input[type=checkbox] { accent-color: var(--rose); width: 16px; height: 16px; }
+    button {
+      font: inherit;
+      font-weight: 600;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 22px;
+      cursor: pointer;
+      background: var(--rose);
+      color: #fff;
+      transition: background .15s;
+    }
+    button:hover:not(:disabled) { background: var(--rose-hover); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.secondary { background: var(--rose-light); color: var(--rose-hover); }
+    button.secondary:hover:not(:disabled) { background: #EBDADB; }
+    .spacer { flex: 1; }
+    .progress-track { height: 10px; background: var(--rose-light); border-radius: 999px; overflow: hidden; margin: 12px 0 8px; }
+    .progress-bar { height: 100%; width: 0; background: var(--rose); transition: width .4s; }
+    .progress-note { color: var(--muted); font-size: .9rem; margin: 0; }
+    .error { background: var(--error-bg); color: var(--error); border-radius: 12px; padding: 12px 16px; margin-top: 16px; }
+    .meta { color: var(--muted); margin: 0 0 12px; }
+    .transcript {
+      max-height: 520px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 16px;
+      background: #fff;
+    }
+    .turn { padding: 10px 0; border-bottom: 1px solid #F3EDED; }
+    .turn:last-child { border-bottom: 0; }
+    .who { font-weight: 700; font-size: .95rem; }
+    .when { color: var(--muted); font-weight: 400; margin-inline-start: 10px; direction: ltr; unicode-bidi: isolate; display: inline-block; }
+    .said { margin: 2px 0 0; white-space: pre-wrap; }
+    .s1 { color: #9F4A58; } .s2 { color: #2F6F8F; } .s3 { color: #4F7A3A; } .s4 { color: #8A6A1F; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>מתמלל <span>שיחות</span></h1>
+  <p class="lead">מעלים הקלטה (AMR ועוד) ומקבלים תמלול בעברית עם הפרדה לדוברים, כקובץ טקסט.</p>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <section class="card" id="upload-card">
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="file" accept=".amr,.awb,.3gp,.3ga,.m4a,.mp3,.wav,.ogg,.opus,.aac,.flac,.mp4,audio/*">
+      <strong>גררי לכאן קובץ הקלטה או לחצי לבחירה</strong>
+      <small>AMR, M4A, MP3, WAV, 3GP ועוד · עד 500MB</small>
+      <div class="file-name" id="file-name" hidden></div>
+    </label>
+    <div class="row">
+      <label><input type="checkbox" id="timestamps" checked> להוסיף זמן (דקה:שנייה) לכל קטע דיבור</label>
+      <span class="spacer"></span>
+      <button id="start" disabled>התחלת תמלול</button>
+    </div>
+    <div id="progress" hidden>
+      <div class="progress-track"><div class="progress-bar" id="bar"></div></div>
+      <p class="progress-note" id="progress-note"></p>
+    </div>
+    <div id="error" class="error" hidden></div>
+  </section>
+
+  <section class="card" id="result-card" hidden>
+    <p class="meta" id="meta"></p>
+    <div class="row" style="margin-top:0;margin-bottom:16px">
+      <button id="download">הורדת קובץ טקסט (TXT)</button>
+      <button id="copy" class="secondary">העתקה ללוח</button>
+      <span class="spacer"></span>
+      <button id="again" class="secondary">תמלול קובץ נוסף</button>
+    </div>
+    <div class="transcript" id="transcript"></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    banner: $("banner"), dropzone: $("dropzone"), file: $("file"), fileName: $("file-name"),
+    timestamps: $("timestamps"), start: $("start"), progress: $("progress"), bar: $("bar"),
+    note: $("progress-note"), error: $("error"), uploadCard: $("upload-card"),
+    resultCard: $("result-card"), meta: $("meta"), transcript: $("transcript"),
+    download: $("download"), copy: $("copy"), again: $("again"),
+  };
+  let selected = null;
+  let currentJob = null;
+  let busy = false;
+  let withTime = true;
+
+  const clock = (s, hours) => {
+    s = Math.floor(s);
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = String(s % 60).padStart(2, "0");
+    return hours || h ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${String(m).padStart(2, "0")}:${sec}`;
+  };
+
+  function setFile(file) {
+    selected = file || null;
+    els.fileName.hidden = !selected;
+    if (selected) {
+      const size = selected.size < 1048576 ? `${Math.max(1, Math.round(selected.size / 1024))}KB` : `${(selected.size / 1048576).toFixed(1)}MB`;
+      els.fileName.textContent = `${selected.name} (${size})`;
+    }
+    els.start.disabled = !selected || busy;
+    els.error.hidden = true;
+  }
+
+  function showError(message) {
+    els.error.textContent = message;
+    els.error.hidden = false;
+  }
+
+  function setBusy(value) {
+    busy = value;
+    els.start.disabled = value || !selected;
+    els.file.disabled = value;
+    els.progress.hidden = !value;
+  }
+
+  function progress(fraction, message) {
+    els.bar.style.width = `${Math.round(fraction * 100)}%`;
+    els.note.textContent = message;
+  }
+
+  fetch("/api/status").then((r) => r.json()).then((s) => {
+    if (!s.ready) {
+      els.banner.textContent = "חסר מפתח GEMINI_API_KEY. צרי קובץ .env בתיקיית CallTranscriber (לפי .env.example), והפעילי את השרת מחדש.";
+      els.banner.hidden = false;
+    }
+  }).catch(() => {});
+
+  els.file.addEventListener("change", () => setFile(els.file.files[0]));
+  ["dragenter", "dragover"].forEach((t) => els.dropzone.addEventListener(t, (e) => { e.preventDefault(); els.dropzone.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach((t) => els.dropzone.addEventListener(t, (e) => { e.preventDefault(); els.dropzone.classList.remove("drag"); }));
+  els.dropzone.addEventListener("drop", (e) => { if (!busy && e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
+
+  function upload(file) {
+    return new Promise((resolve, reject) => {
+      const form = new FormData();
+      form.append("timestamps", els.timestamps.checked ? "on" : "off");
+      form.append("audio", file);
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/transcribe");
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) progress(0.1 * (e.loaded / e.total), `מעלה את הקובץ… ${Math.round((e.loaded / e.total) * 100)}%`);
+      };
+      xhr.onload = () => {
+        let body = {};
+        try { body = JSON.parse(xhr.responseText); } catch {}
+        xhr.status === 202 ? resolve(body.id) : reject(new Error(body.error || "ההעלאה נכשלה."));
+      };
+      xhr.onerror = () => reject(new Error("אין חיבור לשרת. ודאי שהשרת פועל (npm start)."));
+      xhr.send(form);
+    });
+  }
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function waitForJob(id) {
+    for (;;) {
+      const res = await fetch(`/api/jobs/${id}`);
+      const job = await res.json();
+      if (!res.ok) throw new Error(job.error || "שגיאה בקבלת סטטוס.");
+      if (job.status === "error") throw new Error(job.error);
+      if (job.status === "done") return job;
+      progress(Math.max(0.1, job.progress || 0), job.message || "מעבד…");
+      await sleep(1500);
+    }
+  }
+
+  function render(job) {
+    const { segments, durationSec, speakers } = job.result;
+    const hours = durationSec >= 3600;
+    els.meta.textContent = `${job.sourceName} · משך ${clock(durationSec, hours)} · ${speakers} דוברים`;
+    els.transcript.replaceChildren(...segments.map((seg) => {
+      const turn = document.createElement("div");
+      turn.className = "turn";
+      const who = document.createElement("div");
+      who.className = `who s${((seg.speaker - 1) % 4) + 1}`;
+      who.textContent = `דובר ${seg.speaker}`;
+      if (withTime) {
+        const when = document.createElement("span");
+        when.className = "when";
+        when.textContent = clock(seg.start, hours);
+        who.append(when);
+      }
+      const said = document.createElement("p");
+      said.className = "said";
+      said.textContent = seg.text;
+      turn.append(who, said);
+      return turn;
+    }));
+    currentJob = job;
+    els.uploadCard.hidden = true;
+    els.resultCard.hidden = false;
+  }
+
+  els.start.addEventListener("click", async () => {
+    if (!selected || busy) return;
+    els.error.hidden = true;
+    withTime = els.timestamps.checked;
+    setBusy(true);
+    progress(0, "מעלה את הקובץ…");
+    try {
+      const id = await upload(selected);
+      render(await waitForJob(id));
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  els.download.addEventListener("click", () => {
+    if (currentJob) window.location.href = `/api/jobs/${currentJob.id}/download`;
+  });
+
+  els.copy.addEventListener("click", async () => {
+    if (!currentJob) return;
+    try {
+      await navigator.clipboard.writeText(currentJob.result.text);
+      els.copy.textContent = "הועתק ✓";
+    } catch {
+      els.copy.textContent = "ההעתקה נכשלה";
+    }
+    setTimeout(() => { els.copy.textContent = "העתקה ללוח"; }, 2000);
+  });
+
+  els.again.addEventListener("click", () => {
+    currentJob = null;
+    els.file.value = "";
+    setFile(null);
+    els.resultCard.hidden = true;
+    els.uploadCard.hidden = false;
+  });
+})();
+</script>
+</body>
+</html>
